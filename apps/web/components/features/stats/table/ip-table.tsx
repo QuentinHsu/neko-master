@@ -48,7 +48,7 @@ export function IPsTable({
   onPageSizeChange,
 }: IPsTableProps) {
   const t = useTranslations("ips");
-  const stableTimeRange = useStableTimeRange(timeRange);
+  const stableTimeRange = useStableTimeRange(timeRange, { roundToMinute: true });
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -79,6 +79,7 @@ export function IPsTable({
     backendId: activeBackendId,
     range: stableTimeRange,
     minPushIntervalMs: IPS_WS_MIN_PUSH_MS,
+    includeSummary: false,
     includeIPsPage: wsPageEnabled,
     ipsPageOffset: pageOffset,
     ipsPageLimit: pageSize,

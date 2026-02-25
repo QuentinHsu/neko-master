@@ -267,7 +267,7 @@ const DevicesContent = memo(function DevicesContent({
   backendStatus: BackendStatus;
   autoRefresh: boolean;
 }) {
-  const stableTimeRange = useStableTimeRange(timeRange);
+  const stableTimeRange = useStableTimeRange(timeRange, { roundToMinute: true });
 
   const devicesQuery = useQuery({
     queryKey: getDevicesQueryKey(activeBackendId, 50, stableTimeRange),

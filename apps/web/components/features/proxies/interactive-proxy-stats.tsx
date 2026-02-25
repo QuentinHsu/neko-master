@@ -102,7 +102,7 @@ export function InteractiveProxyStats({
   const domainsT = useTranslations("domains");
   const backendT = useTranslations("dashboard");
   const queryClient = useQueryClient();
-  const stableTimeRange = useStableTimeRange(timeRange);
+  const stableTimeRange = useStableTimeRange(timeRange, { roundToMinute: true });
   const detailTimeRange = stableTimeRange;
   const isWindows = useIsWindows();
 
@@ -168,6 +168,7 @@ export function InteractiveProxyStats({
     backendId: activeBackendId,
     range: detailTimeRange,
     minPushIntervalMs: PROXY_DETAIL_WS_MIN_PUSH_MS,
+    includeSummary: false,
     includeProxyDetails: wsDetailEnabled,
     proxyChain: selectedProxy ?? undefined,
     proxyDetailLimit: 5000,
@@ -196,14 +197,14 @@ export function InteractiveProxyStats({
     chain: selectedProxy,
     activeBackendId,
     range: detailTimeRange,
-    enabled: !!selectedProxy,
+    enabled: !wsDetailEnabled || wsDetailStatus !== "connected",
   });
 
   const { data: proxyIPs = [], isLoading: ipsLoading } = useProxyIPs({
     chain: selectedProxy,
     activeBackendId,
     range: detailTimeRange,
-    enabled: !!selectedProxy,
+    enabled: !wsDetailEnabled || wsDetailStatus !== "connected",
   });
 
   // Since we rely on cache updates from WS, we don't need dedicated state to track "hasWsDetails"

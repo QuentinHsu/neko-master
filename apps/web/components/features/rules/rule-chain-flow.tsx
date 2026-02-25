@@ -993,6 +993,7 @@ function UnifiedRuleChainFlowInner({
     backendId: activeBackendId,
     range: stableRange,
     minPushIntervalMs: RULE_CHAIN_FLOW_WS_MIN_PUSH_MS,
+    includeSummary: false,
     includeRuleChainFlow: wsEnabled,
     trackLastMessage: false,
     enabled: wsEnabled,

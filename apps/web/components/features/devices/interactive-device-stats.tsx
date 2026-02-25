@@ -79,7 +79,7 @@ export function InteractiveDeviceStats({
   const t = useTranslations("devices");
   const domainsT = useTranslations("domains");
   const backendT = useTranslations("dashboard");
-  const detailTimeRange = useStableTimeRange(timeRange);
+  const detailTimeRange = useStableTimeRange(timeRange, { roundToMinute: true });
   const queryClient = useQueryClient();
 
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
@@ -140,6 +140,7 @@ export function InteractiveDeviceStats({
     backendId: activeBackendId,
     range: detailTimeRange,
     minPushIntervalMs: DEVICE_DETAIL_WS_MIN_PUSH_MS,
+    includeSummary: false,
     includeDeviceDetails: wsDetailEnabled,
     deviceSourceIP: selectedDevice ?? undefined,
     deviceDetailLimit: 5000,

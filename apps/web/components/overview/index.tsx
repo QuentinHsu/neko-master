@@ -213,6 +213,7 @@ export function OverviewTab({
     backendId: activeBackendId,
     range: { start: trendQuery.start, end: trendQuery.end },
     minPushIntervalMs: TREND_WS_MIN_PUSH_MS,
+    includeSummary: false,
     includeTrend: wsTrendEnabled,
     trendMinutes: trendQuery.minutes,
     trendBucketMinutes: trendQuery.bucketMinutes,
@@ -241,7 +242,7 @@ export function OverviewTab({
     bucketMinutes: trendQuery.bucketMinutes,
     range: { start: trendQuery.start, end: trendQuery.end },
     enabled: !!activeBackendId,
-    refetchInterval: wsTrendEnabled && wsTrendStatus === "connected" ? 90000 : false,
+    refetchInterval: wsTrendEnabled && wsTrendConnected ? 90000 : false,
   });
 
   // Sync trend granularity state
@@ -329,4 +330,3 @@ export function OverviewTab({
     </div>
   );
 }
-

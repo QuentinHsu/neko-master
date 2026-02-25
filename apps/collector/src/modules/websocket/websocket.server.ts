@@ -12,6 +12,7 @@ export interface WebSocketMessage {
   start?: string;
   end?: string;
   minPushIntervalMs?: number;
+  includeSummary?: boolean;
   includeTrend?: boolean;
   trendMinutes?: number;
   trendBucketMinutes?: number;
@@ -87,6 +88,7 @@ interface ClientInfo {
   backendId: number | null; // null means use active backend
   range: ClientRange;
   minPushIntervalMs: number;
+  includeSummary: boolean;
   lastSentAt: number;
   trend: ClientTrend;
   deviceDetail: ClientDeviceDetail;
@@ -204,6 +206,7 @@ export class StatsWebSocketServer {
         backendId: null,
         range: {},
         minPushIntervalMs: 0,
+        includeSummary: true,
         lastSentAt: 0,
         trend: null,
         deviceDetail: null,
@@ -261,6 +264,14 @@ export class StatsWebSocketServer {
               );
               if (nextMinPushIntervalMs !== clientInfo.minPushIntervalMs) {
                 clientInfo.minPushIntervalMs = nextMinPushIntervalMs;
+                changed = true;
+              }
+            }
+
+            if (msg.includeSummary !== undefined) {
+              const nextIncludeSummary = msg.includeSummary !== false;
+              if (nextIncludeSummary !== clientInfo.includeSummary) {
+                clientInfo.includeSummary = nextIncludeSummary;
                 changed = true;
               }
             }
@@ -960,7 +971,7 @@ export class StatsWebSocketServer {
         clientInfo.includeRuleChainFlow,
         clientInfo.domainsPage,
         clientInfo.ipsPage,
-        true,
+        clientInfo.includeSummary,
       );
 
       if (!stats) return;
@@ -1021,6 +1032,7 @@ export class StatsWebSocketServer {
         const trendKey = clientInfo.trend
           ? `${clientInfo.trend.minutes}|${clientInfo.trend.bucketMinutes}`
           : '';
+        const includeSummaryKey = clientInfo.includeSummary ? '1' : '0';
         const deviceDetailKey = clientInfo.deviceDetail
           ? `${clientInfo.deviceDetail.sourceIP}|${clientInfo.deviceDetail.limit}`
           : '';
@@ -1037,7 +1049,7 @@ export class StatsWebSocketServer {
         const ipsPageKey = clientInfo.ipsPage
           ? `${clientInfo.ipsPage.offset}|${clientInfo.ipsPage.limit}|${clientInfo.ipsPage.sortBy || ''}|${clientInfo.ipsPage.sortOrder || ''}|${clientInfo.ipsPage.search || ''}`
           : '';
-        const cacheKey = `${resolvedBackendId}|${clientInfo.range.start || ''}|${clientInfo.range.end || ''}|${trendKey}|${deviceDetailKey}|${proxyDetailKey}|${ruleDetailKey}|${ruleChainFlowKey}|${domainsPageKey}|${ipsPageKey}`;
+        const cacheKey = `${resolvedBackendId}|${clientInfo.range.start || ''}|${clientInfo.range.end || ''}|${includeSummaryKey}|${trendKey}|${deviceDetailKey}|${proxyDetailKey}|${ruleDetailKey}|${ruleChainFlowKey}|${domainsPageKey}|${ipsPageKey}`;
         if (!jsonCache.has(cacheKey)) {
           jsonCache.set(
             cacheKey,
@@ -1051,6 +1063,7 @@ export class StatsWebSocketServer {
               clientInfo.includeRuleChainFlow,
               clientInfo.domainsPage,
               clientInfo.ipsPage,
+              clientInfo.includeSummary,
             ).then((stats) => (
               stats ? JSON.stringify({ type: 'stats', data: stats, timestamp: ts }) : null
             )).catch((err) => {

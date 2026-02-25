@@ -48,7 +48,7 @@ export function DomainsTable({
   onPageSizeChange,
 }: DomainsTableProps) {
   const t = useTranslations("domains");
-  const stableTimeRange = useStableTimeRange(timeRange);
+  const stableTimeRange = useStableTimeRange(timeRange, { roundToMinute: true });
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -81,6 +81,7 @@ export function DomainsTable({
     backendId: activeBackendId,
     range: stableTimeRange,
     minPushIntervalMs: DOMAINS_WS_MIN_PUSH_MS,
+    includeSummary: false,
     includeDomainsPage: wsPageEnabled,
     domainsPageOffset: pageOffset,
     domainsPageLimit: pageSize,

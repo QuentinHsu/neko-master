@@ -117,8 +117,15 @@ export function useDashboard(): UseDashboardReturn {
   const [isFirstTime, setIsFirstTime] = useState(false);
   const [showAboutDialog, setShowAboutDialog] = useState(false);
 
-  const stableTimeRange = useStableTimeRange(timeRange);
-  const isWsSummaryTab = activeTab === "overview" || activeTab === "countries";
+  const stableTimeRange = useStableTimeRange(timeRange, {
+    roundToMinute: isRollingTimePreset(timePreset),
+  });
+  const isWsSummaryTab =
+    activeTab === "overview" ||
+    activeTab === "countries" ||
+    activeTab === "proxies" ||
+    activeTab === "rules" ||
+    activeTab === "devices";
   
   // Auth check
   const { showLogin, isLoading: isAuthLoading } = useRequireAuth();
@@ -182,6 +189,8 @@ export function useDashboard(): UseDashboardReturn {
   const wsConnected = wsStatus === "connected";
   const wsRealtimeActive = wsEnabled && wsConnected;
   const shouldReducePolling = wsRealtimeActive;
+  const fallbackRefetchInterval =
+    autoRefresh && isWsSummaryTab && !wsRealtimeActive ? 5000 : false;
   const hasWsCountries =
     wsRealtimeActive &&
     !!wsSummary?.countryStats &&
@@ -193,8 +202,10 @@ export function useDashboard(): UseDashboardReturn {
   const summaryQuery = useQuery({
     queryKey: getSummaryQueryKey(activeBackendId, stableTimeRange),
     queryFn: () => api.getSummary(activeBackendId, stableTimeRange),
-    enabled: !!activeBackendId && !(wsEnabled && wsConnected),
+    enabled: !!activeBackendId && isWsSummaryTab && !(wsEnabled && wsConnected),
     placeholderData: keepPreviousData,
+    refetchInterval: fallbackRefetchInterval,
+    refetchIntervalInBackground: true,
   });
 
   const countriesQuery = useQuery({
@@ -202,6 +213,8 @@ export function useDashboard(): UseDashboardReturn {
     queryFn: () => api.getCountries(activeBackendId, 50, stableTimeRange),
     enabled: !!activeBackendId && needsCountries && !hasWsCountries,
     placeholderData: keepPreviousData,
+    refetchInterval: needsCountries ? fallbackRefetchInterval : false,
+    refetchIntervalInBackground: true,
   });
 
   const data: StatsSummary | null =

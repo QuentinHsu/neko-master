@@ -245,10 +245,11 @@ export function InteractiveRuleStats({
   }, [chartData]);
 
   const wsDetailEnabled = autoRefresh && !!activeBackendId && !!selectedRule;
-  useStatsWebSocket({
+  const { status: wsDetailStatus } = useStatsWebSocket({
     backendId: activeBackendId,
     range: detailTimeRange,
     minPushIntervalMs: RULE_DETAIL_WS_MIN_PUSH_MS,
+    includeSummary: false,
     includeRuleDetails: wsDetailEnabled,
     ruleName: selectedRule ?? undefined,
     ruleDetailLimit: 5000,
@@ -277,14 +278,14 @@ export function InteractiveRuleStats({
     rule: selectedRule,
     activeBackendId,
     range: detailTimeRange,
-    enabled: !!selectedRule,
+    enabled: !wsDetailEnabled || wsDetailStatus !== "connected",
   });
 
   const { data: ruleIPs = [], isLoading: ipsLoading } = useRuleIPs({
     rule: selectedRule,
     activeBackendId,
     range: detailTimeRange,
-    enabled: !!selectedRule,
+    enabled: !wsDetailEnabled || wsDetailStatus !== "connected",
   });
 
   const loading = !!selectedRule && (domainsLoading || ipsLoading) && ruleDomains.length === 0 && ruleIPs.length === 0;

@@ -32,6 +32,7 @@ interface UseStatsWebSocketOptions {
   backendId?: number;
   range?: TimeRange;
   minPushIntervalMs?: number;
+  includeSummary?: boolean;
   includeTrend?: boolean;
   trendMinutes?: number;
   trendBucketMinutes?: number;
@@ -149,6 +150,7 @@ export function useStatsWebSocket(options: UseStatsWebSocketOptions = {}) {
     backendId,
     range,
     minPushIntervalMs,
+    includeSummary,
     includeTrend,
     trendMinutes,
     trendBucketMinutes,
@@ -339,6 +341,7 @@ export function useStatsWebSocket(options: UseStatsWebSocketOptions = {}) {
       start: range?.start,
       end: range?.end,
       minPushIntervalMs,
+      includeSummary,
       includeTrend,
       trendMinutes,
       trendBucketMinutes,
@@ -373,6 +376,7 @@ export function useStatsWebSocket(options: UseStatsWebSocketOptions = {}) {
     range?.start,
     range?.end,
     minPushIntervalMs,
+    includeSummary,
     includeTrend,
     trendMinutes,
     trendBucketMinutes,

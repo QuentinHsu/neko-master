@@ -10,6 +10,7 @@ export interface WebSocketMessage {
   start?: string;
   end?: string;
   minPushIntervalMs?: number;
+  includeSummary?: boolean;
 
   // Trend
   includeTrend?: boolean;
@@ -101,6 +102,7 @@ export interface ClientInfo {
   backendId: number | null; // null means use active backend
   range: ClientRange;
   minPushIntervalMs: number;
+  includeSummary: boolean;
   lastSentAt: number;
   trend: ClientTrend;
   deviceDetail: ClientDeviceDetail;
