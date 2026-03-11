@@ -8,7 +8,7 @@ AGENT_BIN="${NEKO_AGENT_BIN:-$INSTALL_DIR/neko-agent}"
 CONFIG_DIR="${NEKO_AGENT_CONFIG_DIR:-/etc/neko-agent}"
 STATE_DIR="${NEKO_AGENT_STATE_DIR:-/var/run/neko-agent}"
 AGENT_REPO="${NEKO_AGENT_REPO:-foru17/neko-master}"
-VERSION="0.2.1"
+VERSION="0.2.2"
 
 log() {
   printf '[%s] %s\n' "$PROG" "$1"
@@ -141,6 +141,29 @@ service_name_for_instance() {
   printf 'neko-agent-%s\n' "$name"
 }
 
+# Check if instance is managed by a service manager (systemd/launchd/openwrt)
+# Returns 0 if managed, 1 if not
+is_service_managed() {
+  name="$1"
+  manager="$(detect_service_manager)"
+  service="$(service_name_for_instance "$name")"
+  case "$manager" in
+    systemd)
+      systemctl is-enabled "$service" >/dev/null 2>&1 && return 0
+      ;;
+    launchd)
+      label="io.neko-master.agent.${name}"
+      plist_path="${HOME}/Library/LaunchAgents/${label}.plist"
+      [ -f "$plist_path" ] && return 0
+      ;;
+    openwrt)
+      init_path="/etc/init.d/${service}"
+      [ -x "$init_path" ] && return 0
+      ;;
+  esac
+  return 1
+}
+
 runner_file() {
   name="$1"
   printf '%s/%s.run.sh\n' "$CONFIG_DIR" "$name"
@@ -221,8 +244,10 @@ Wants=network-online.target
 [Service]
 Type=simple
 ExecStart=${runner}
-Restart=on-failure
+Restart=always
 RestartSec=5
+StartLimitIntervalSec=300
+StartLimitBurst=10
 
 [Install]
 WantedBy=multi-user.target
@@ -841,6 +866,14 @@ cmd_add() {
   fi
 
   # Initialize config
+  cf="$(config_file "$name")"
+  if [ -f "$cf" ]; then
+    log "updating existing instance '$name' config"
+    if is_running "$name"; then
+      log "stopping existing instance '$name' before reconfiguring..."
+      cmd_stop "$name" || true
+    fi
+  fi
   # shellcheck disable=SC2086
   cmd_init "$name" $config_vars
 
@@ -855,6 +888,24 @@ cmd_add() {
 cmd_start() {
   name="$1"
   ensure_dirs
+
+  # If managed by service manager, delegate to it
+  if is_service_managed "$name"; then
+    manager="$(detect_service_manager)"
+    service="$(service_name_for_instance "$name")"
+    case "$manager" in
+      systemd)  systemctl start "$service" ;;
+      launchd)
+        label="io.neko-master.agent.${name}"
+        plist_path="${HOME}/Library/LaunchAgents/${label}.plist"
+        launchctl load "$plist_path" 2>/dev/null || true
+        ;;
+      openwrt)  "/etc/init.d/${service}" start ;;
+    esac
+    log "instance '$name' started via $manager"
+    return 0
+  fi
+
   if [ ! -x "$AGENT_BIN" ]; then
     err "agent binary not found/executable: $AGENT_BIN"
     exit 1
@@ -878,6 +929,25 @@ cmd_start() {
 
 cmd_stop() {
   name="$1"
+
+  # If managed by service manager, delegate to it
+  if is_service_managed "$name"; then
+    manager="$(detect_service_manager)"
+    service="$(service_name_for_instance "$name")"
+    case "$manager" in
+      systemd)  systemctl stop "$service" ;;
+      launchd)
+        label="io.neko-master.agent.${name}"
+        plist_path="${HOME}/Library/LaunchAgents/${label}.plist"
+        launchctl unload "$plist_path" 2>/dev/null || true
+        ;;
+      openwrt)  "/etc/init.d/${service}" stop ;;
+    esac
+    rm -f "$(pid_file "$name")"
+    log "instance '$name' stopped via $manager"
+    return 0
+  fi
+
   pf="$(pid_file "$name")"
   if ! is_running "$name"; then
     rm -f "$pf"
@@ -901,16 +971,31 @@ cmd_stop() {
 
 cmd_status() {
   name="$1"
+  managed=""
+  if is_service_managed "$name"; then
+    managed=" (managed by $(detect_service_manager))"
+  fi
   if is_running "$name"; then
-    log "instance '$name' is running (pid $(cat "$(pid_file "$name")"))"
+    log "instance '$name' is running (pid $(cat "$(pid_file "$name")"))${managed}"
     exit 0
   fi
-  log "instance '$name' is stopped"
+  log "instance '$name' is stopped${managed}"
   exit 1
 }
 
 cmd_logs() {
   name="$1"
+
+  # If managed by systemd, prefer journalctl for proper log rotation
+  if is_service_managed "$name"; then
+    manager="$(detect_service_manager)"
+    if [ "$manager" = "systemd" ]; then
+      service="$(service_name_for_instance "$name")"
+      journalctl -u "$service" -f --no-pager
+      return 0
+    fi
+  fi
+
   lf="$(log_file "$name")"
   if [ ! -f "$lf" ]; then
     err "log file not found: $lf"
@@ -933,10 +1018,14 @@ cmd_list() {
     else
       status="stopped"
     fi
+    managed=""
+    if is_service_managed "$name"; then
+      managed=" [$(detect_service_manager)]"
+    fi
     # Load config to show backend info
     # shellcheck disable=SC1090
     . "$f"
-    printf '%-20s %-10s backend-id=%s gateway=%s\n' "$name" "$status" "${NEKO_BACKEND_ID:-?}" "${NEKO_GATEWAY_TYPE:-?}"
+    printf '%-20s %-10s backend-id=%s gateway=%s%s\n' "$name" "$status" "${NEKO_BACKEND_ID:-?}" "${NEKO_GATEWAY_TYPE:-?}" "$managed"
   done
   if [ "$found" = false ]; then
     log "no instances configured"
@@ -1001,8 +1090,32 @@ cmd_upgrade_global() {
     name="$(basename "$f" .env)"
     if is_running "$name"; then
       log "restarting running instance '$name'..."
-      cmd_stop "$name" || true
-      cmd_start "$name"
+      if is_service_managed "$name"; then
+        # Re-generate runner script and update service unit for managed instances
+        load_config "$name"
+        runner="$(generate_runner_script "$name")"
+        manager="$(detect_service_manager)"
+        service="$(service_name_for_instance "$name")"
+        case "$manager" in
+          systemd)
+            write_systemd_unit "$name" "$runner" >/dev/null
+            systemctl daemon-reload
+            systemctl restart "$service"
+            ;;
+          launchd)
+            plist_path="$(write_launchd_plist "$name" "$runner")"
+            launchctl unload "$plist_path" >/dev/null 2>&1 || true
+            launchctl load "$plist_path"
+            ;;
+          openwrt)
+            write_openwrt_init "$name" "$runner" >/dev/null
+            "/etc/init.d/${service}" restart
+            ;;
+        esac
+      else
+        cmd_stop "$name" || true
+        cmd_start "$name"
+      fi
       restarted_any=true
     fi
   done
