@@ -83,6 +83,52 @@ describe('TrafficWriterRepository', () => {
       expect(domains[0].totalDownload).toBe(170);
       expect(domains[0].totalConnections).toBe(2);
     });
+
+    it('should expose per-proxy minute peaks from recorded traffic', () => {
+      const minute0 = Date.parse('2026-01-01T00:00:15.000Z');
+      const minute1 = Date.parse('2026-01-01T00:01:05.000Z');
+
+      db.updateTrafficStats(backendId, {
+        domain: 'peak.example',
+        ip: '1.2.3.4',
+        chain: 'ProxyA',
+        chains: ['ProxyA', 'Match'],
+        rule: 'Match',
+        rulePayload: '',
+        upload: 100,
+        download: 200,
+        timestampMs: minute0,
+      });
+
+      db.updateTrafficStats(backendId, {
+        domain: 'peak.example',
+        ip: '1.2.3.4',
+        chain: 'ProxyA',
+        chains: ['ProxyA', 'Match'],
+        rule: 'Match',
+        rulePayload: '',
+        upload: 40,
+        download: 60,
+        timestampMs: minute0 + 10_000,
+      });
+
+      db.updateTrafficStats(backendId, {
+        domain: 'peak.example',
+        ip: '1.2.3.4',
+        chain: 'ProxyA',
+        chains: ['ProxyA', 'Match'],
+        rule: 'Match',
+        rulePayload: '',
+        upload: 150,
+        download: 80,
+        timestampMs: minute1,
+      });
+
+      const proxies = db.getProxyStats(backendId);
+      expect(proxies).toHaveLength(1);
+      expect(proxies[0].peakDownload).toBe(260);
+      expect(proxies[0].peakUpload).toBe(150);
+    });
   });
 
   describe('batchUpdateTrafficStats', () => {

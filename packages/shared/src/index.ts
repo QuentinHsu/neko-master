@@ -95,6 +95,8 @@ export interface ProxyStats {
   chain: string;
   totalUpload: number;
   totalDownload: number;
+  peakUpload: number;
+  peakDownload: number;
   totalConnections: number;
   lastSeen: string;
 }

@@ -545,6 +545,8 @@ export class RealtimeMerger {
       if (existing) {
         existing.totalUpload += delta.totalUpload;
         existing.totalDownload += delta.totalDownload;
+        existing.peakUpload = Math.max(existing.peakUpload, delta.peakUpload);
+        existing.peakDownload = Math.max(existing.peakDownload, delta.peakDownload);
         existing.totalConnections += delta.totalConnections;
         if (delta.lastSeen > existing.lastSeen) {
           existing.lastSeen = delta.lastSeen;
@@ -554,6 +556,8 @@ export class RealtimeMerger {
           chain,
           totalUpload: delta.totalUpload,
           totalDownload: delta.totalDownload,
+          peakUpload: delta.peakUpload,
+          peakDownload: delta.peakDownload,
           totalConnections: delta.totalConnections,
           lastSeen: delta.lastSeen,
         });

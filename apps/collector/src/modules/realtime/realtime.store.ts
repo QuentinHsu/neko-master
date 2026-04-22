@@ -27,8 +27,16 @@ type ProxyDelta = {
   chain: string;
   totalUpload: number;
   totalDownload: number;
+  peakUpload: number;
+  peakDownload: number;
   totalConnections: number;
   lastSeen: string;
+};
+
+type ProxyMinuteBucket = {
+  upload: number;
+  download: number;
+  lastUpdated: number;
 };
 
 type DeviceDelta = {
@@ -230,6 +238,7 @@ export class RealtimeStore {
   public domainByBackend = new Map<number, Map<string, DomainDelta>>();
   public ipByBackend = new Map<number, Map<string, IPDelta>>();
   public proxyByBackend = new Map<number, Map<string, ProxyDelta>>();
+  public proxyMinuteByBackend = new Map<number, Map<string, Map<string, ProxyMinuteBucket>>>();
   public deviceByBackend = new Map<number, Map<string, DeviceDelta>>();
   public deviceDomainByBackend = new Map<number, Map<string, Map<string, DomainDelta>>>();
   public deviceIPByBackend = new Map<number, Map<string, Map<string, IPDelta>>>();
@@ -441,12 +450,38 @@ export class RealtimeStore {
       chain: proxyChain,
       totalUpload: 0,
       totalDownload: 0,
+      peakUpload: 0,
+      peakDownload: 0,
       totalConnections: 0,
       lastSeen,
     };
 
+    const proxyMinuteKey = toMinuteKey(timestamp);
+    let proxyMinuteMap = this.proxyMinuteByBackend.get(backendId);
+    if (!proxyMinuteMap) {
+      proxyMinuteMap = new Map();
+      this.proxyMinuteByBackend.set(backendId, proxyMinuteMap);
+    }
+    let proxyMinuteBuckets = proxyMinuteMap.get(proxyChain);
+    if (!proxyMinuteBuckets) {
+      proxyMinuteBuckets = new Map();
+      proxyMinuteMap.set(proxyChain, proxyMinuteBuckets);
+    }
+    const proxyMinuteBucket = proxyMinuteBuckets.get(proxyMinuteKey) || {
+      upload: 0,
+      download: 0,
+      lastUpdated: 0,
+    };
+    proxyMinuteBucket.upload += meta.upload;
+    proxyMinuteBucket.download += meta.download;
+    proxyMinuteBucket.lastUpdated = timestamp;
+    proxyMinuteBuckets.set(proxyMinuteKey, proxyMinuteBucket);
+    this.pruneOldBuckets(proxyMinuteBuckets as Map<string, MinuteBucket>, timestamp);
+
     proxyDelta.totalUpload += meta.upload;
     proxyDelta.totalDownload += meta.download;
+    proxyDelta.peakUpload = Math.max(proxyDelta.peakUpload, proxyMinuteBucket.upload);
+    proxyDelta.peakDownload = Math.max(proxyDelta.peakDownload, proxyMinuteBucket.download);
     proxyDelta.totalConnections += connections;
     proxyDelta.lastSeen = lastSeen;
     proxyMap.set(proxyChain, proxyDelta);
@@ -1062,6 +1097,8 @@ export class RealtimeStore {
       if (existing) {
         existing.totalUpload += delta.totalUpload;
         existing.totalDownload += delta.totalDownload;
+        existing.peakUpload = Math.max(existing.peakUpload, delta.peakUpload);
+        existing.peakDownload = Math.max(existing.peakDownload, delta.peakDownload);
         existing.totalConnections += delta.totalConnections;
         if (delta.lastSeen > existing.lastSeen) {
           existing.lastSeen = delta.lastSeen;
@@ -1071,6 +1108,8 @@ export class RealtimeStore {
           chain,
           totalUpload: delta.totalUpload,
           totalDownload: delta.totalDownload,
+          peakUpload: delta.peakUpload,
+          peakDownload: delta.peakDownload,
           totalConnections: delta.totalConnections,
           lastSeen: delta.lastSeen,
         });
@@ -1415,6 +1454,7 @@ export class RealtimeStore {
   clearTrafficSummary(backendId: number): void {
     this.summaryByBackend.delete(backendId);
     this.minuteByBackend.delete(backendId);
+    this.proxyMinuteByBackend.delete(backendId);
   }
 
   clearTrafficDimensions(backendId: number): void {

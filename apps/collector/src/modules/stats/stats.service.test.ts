@@ -136,6 +136,9 @@ describe('StatsService', () => {
       expect(proxies.length).toBeGreaterThanOrEqual(1);
       const proxyNames = proxies.map(p => p.chain);
       expect(proxyNames).toContain('DIRECT');
+      const proxyUS = proxies.find((proxy) => proxy.chain === 'ProxyUS');
+      expect(proxyUS?.peakDownload).toBe(4500);
+      expect(proxyUS?.peakUpload).toBe(700);
     });
   });
 

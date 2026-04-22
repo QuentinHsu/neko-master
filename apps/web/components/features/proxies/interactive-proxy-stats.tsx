@@ -101,6 +101,7 @@ export function InteractiveProxyStats({
   const t = useTranslations("proxies");
   const domainsT = useTranslations("domains");
   const backendT = useTranslations("dashboard");
+  const statsT = useTranslations("stats");
   const queryClient = useQueryClient();
   const stableTimeRange = useStableTimeRange(timeRange, { roundToMinute: true });
   const detailTimeRange = stableTimeRange;
@@ -141,6 +142,8 @@ export function InteractiveProxyStats({
       value: proxy.totalDownload + proxy.totalUpload,
       download: proxy.totalDownload,
       upload: proxy.totalUpload,
+      peakDownload: proxy.peakDownload,
+      peakUpload: proxy.peakUpload,
       connections: proxy.totalConnections,
       color: COLORS[index % COLORS.length],
       countryCode: getProxyCountryCode(proxy.chain),
@@ -354,6 +357,14 @@ export function InteractiveProxyStats({
                             <span className="flex items-center gap-1 tabular-nums"><Link2 className="w-3 h-3" />{formatNumber(item.connections)}</span>
                           </div>
                           <span className="tabular-nums text-right min-[300px]:text-right">{percentage.toFixed(1)}%</span>
+                        </div>
+                        <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
+                          <span className="tabular-nums whitespace-nowrap">
+                            {statsT("peakDownload")} {formatBytes(item.peakDownload)}/{statsT("perMin")}
+                          </span>
+                          <span className="tabular-nums whitespace-nowrap min-[360px]:text-right">
+                            {statsT("peakUpload")} {formatBytes(item.peakUpload)}/{statsT("perMin")}
+                          </span>
                         </div>
                       </div>
                     </button>

@@ -486,23 +486,36 @@ LIMIT ${limit} OFFSET ${offset}
   ): Promise<ProxyStats[] | null> {
     const rows = await this.query<Record<string, unknown>>(`
 SELECT
-  arrayElement(splitByString(' > ', chain), 1) AS proxy_name,
-  toUInt64(SUM(upload)) AS totalUpload,
-  toUInt64(SUM(download)) AS totalDownload,
+  proxy_name,
+  toUInt64(SUM(minute_upload)) AS totalUpload,
+  toUInt64(SUM(minute_download)) AS totalDownload,
+  toUInt64(MAX(minute_upload)) AS peakUpload,
+  toUInt64(MAX(minute_download)) AS peakDownload,
   toUInt64(SUM(connections)) AS totalConnections,
   toString(max(minute)) AS lastSeen
-FROM ${this.config.database}.traffic_detail_buffer
-WHERE backend_id = ${backendId}
-  AND minute >= toDateTime('${this.toDateTime(start)}')
-  AND minute <= toDateTime('${this.toDateTime(end)}')
+FROM (
+  SELECT
+    arrayElement(splitByString(' > ', chain), 1) AS proxy_name,
+    minute,
+    SUM(upload) AS minute_upload,
+    SUM(download) AS minute_download,
+    SUM(connections) AS connections
+  FROM ${this.config.database}.traffic_detail_buffer
+  WHERE backend_id = ${backendId}
+    AND minute >= toDateTime('${this.toDateTime(start)}')
+    AND minute <= toDateTime('${this.toDateTime(end)}')
+  GROUP BY proxy_name, minute
+)
 GROUP BY proxy_name
-ORDER BY (SUM(upload) + SUM(download)) DESC
+ORDER BY (SUM(minute_upload) + SUM(minute_download)) DESC
 `);
     if (!rows) return null;
     return rows.map((row) => ({
       chain: String(row.proxy_name || ''),
       totalUpload: Number(row.totalUpload || 0),
       totalDownload: Number(row.totalDownload || 0),
+      peakUpload: Number(row.peakUpload || 0),
+      peakDownload: Number(row.peakDownload || 0),
       totalConnections: Number(row.totalConnections || 0),
       lastSeen: String(row.lastSeen || ''),
     }));

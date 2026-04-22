@@ -392,6 +392,8 @@ export abstract class BaseRepository {
       if (existing) {
         existing.totalUpload += row.totalUpload;
         existing.totalDownload += row.totalDownload;
+        existing.peakUpload = Math.max(existing.peakUpload, row.peakUpload);
+        existing.peakDownload = Math.max(existing.peakDownload, row.peakDownload);
         existing.totalConnections += row.totalConnections;
         if (row.lastSeen > existing.lastSeen) {
           existing.lastSeen = row.lastSeen;
@@ -401,6 +403,8 @@ export abstract class BaseRepository {
           chain: hop,
           totalUpload: row.totalUpload,
           totalDownload: row.totalDownload,
+          peakUpload: row.peakUpload,
+          peakDownload: row.peakDownload,
           totalConnections: row.totalConnections,
           lastSeen: row.lastSeen,
         });
