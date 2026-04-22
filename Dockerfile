@@ -8,9 +8,6 @@ RUN apk add --no-cache python3 make g++ gcc && \
 # Set working directory
 WORKDIR /app
 
-# Disable Next.js telemetry
-ENV NEXT_TELEMETRY_DISABLED=1
-
 # Copy package files
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps/collector/package.json ./apps/collector/
@@ -59,10 +56,10 @@ RUN mkdir -p /app/data
 # Copy collector (deploy bundle with production deps)
 COPY --from=base /app/apps/collector-deploy ./apps/collector
 
-# Copy web (Next.js standalone output)
-COPY --from=base /app/apps/web/.next/standalone ./apps/web/.next/standalone
-COPY --from=base /app/apps/web/.next/static ./apps/web/.next/standalone/apps/web/.next/static
-COPY --from=base /app/apps/web/public ./apps/web/.next/standalone/apps/web/public
+# Copy web static bundle and runtime server
+COPY --from=base /app/apps/web/dist ./apps/web/dist
+COPY --from=base /app/apps/web/public ./apps/web/public
+COPY --from=base /app/apps/web/server.mjs ./apps/web/server.mjs
 
 # Copy root package.json (optional, for reference)
 COPY --from=base /app/package.json ./

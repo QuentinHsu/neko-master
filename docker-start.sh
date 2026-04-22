@@ -37,7 +37,7 @@ echo "💾 Database:   ${DB_PATH}"
 echo
 
 # ─── Runtime config for web (dynamic ports) ───────────────────────────
-RUNTIME_CONFIG_PATH="/app/apps/web/.next/standalone/apps/web/public/runtime-config.js"
+RUNTIME_CONFIG_PATH="/app/apps/web/public/runtime-config.js"
 RUNTIME_API_PORT="${API_EXTERNAL_PORT:-$API_PORT}"
 RUNTIME_WS_PORT="${WS_EXTERNAL_PORT:-$COLLECTOR_WS_PORT}"
 
@@ -78,11 +78,11 @@ fi
 
 # ─── Start web frontend ─────────────────────────────────────────────
 echo "🌐 Starting web frontend..."
-cd /app/apps/web/.next/standalone/apps/web && \
+cd /app/apps/web && \
   HOSTNAME=0.0.0.0 \
   NODE_ENV=production \
   PORT="${WEB_PORT}" \
-  node server.js &
+  node server.mjs &
 WEB_PID=$!
 
 # Wait for web to be ready (up to 30 seconds)
