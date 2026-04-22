@@ -69,6 +69,10 @@ function renderCustomBarLabel(props: any) {
   );
 }
 
+function formatRate(bytesPerSecond?: number): string {
+  return `${formatBytes(bytesPerSecond ?? 0, 0)}/s`;
+}
+
 // Hook to detect container width for responsive chart items
 function useContainerWidth(ref: React.RefObject<HTMLElement | null>) {
   const [width, setWidth] = useState(0);
@@ -99,6 +103,7 @@ export function InteractiveProxyStats({
   autoRefresh = true,
 }: InteractiveProxyStatsProps) {
   const t = useTranslations("proxies");
+  const statsT = useTranslations("stats");
   const domainsT = useTranslations("domains");
   const backendT = useTranslations("dashboard");
   const queryClient = useQueryClient();
@@ -142,6 +147,8 @@ export function InteractiveProxyStats({
       download: proxy.totalDownload,
       upload: proxy.totalUpload,
       connections: proxy.totalConnections,
+      maxDownloadPerSecond: proxy.maxDownloadPerSecond ?? 0,
+      maxUploadPerSecond: proxy.maxUploadPerSecond ?? 0,
       color: COLORS[index % COLORS.length],
       countryCode: getProxyCountryCode(proxy.chain),
       rank: index,
@@ -290,7 +297,23 @@ export function InteractiveProxyStats({
                             <CountryFlag country={item.countryCode} className="h-3.5 w-5" />
                             <p className="font-medium text-sm">{item.name}</p>
                           </div>
-                          <p className="text-xs text-muted-foreground">{formatBytes(item.value)}</p>
+                          <div className="space-y-1 text-xs">
+                            <p className="text-muted-foreground">{formatBytes(item.value)}</p>
+                            <div className="grid grid-cols-2 gap-x-3 gap-y-1 border-t border-border/50 pt-2">
+                              <span className="text-blue-500">
+                                ↓ {statsT("peakDownload")}
+                              </span>
+                              <span className="text-right tabular-nums">
+                                {formatRate(item.maxDownloadPerSecond)}
+                              </span>
+                              <span className="text-purple-500">
+                                ↑ {statsT("peakUpload")}
+                              </span>
+                              <span className="text-right tabular-nums">
+                                {formatRate(item.maxUploadPerSecond)}
+                              </span>
+                            </div>
+                          </div>
                         </div>
                       );
                     }
@@ -354,6 +377,16 @@ export function InteractiveProxyStats({
                             <span className="flex items-center gap-1 tabular-nums"><Link2 className="w-3 h-3" />{formatNumber(item.connections)}</span>
                           </div>
                           <span className="tabular-nums text-right min-[300px]:text-right">{percentage.toFixed(1)}%</span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground/90">
+                          <span className="whitespace-nowrap">
+                            <span className="text-blue-500 dark:text-blue-400">{statsT("peakDownload")}</span>{" "}
+                            <span className="tabular-nums">{formatRate(item.maxDownloadPerSecond)}</span>
+                          </span>
+                          <span className="whitespace-nowrap">
+                            <span className="text-purple-500 dark:text-purple-400">{statsT("peakUpload")}</span>{" "}
+                            <span className="tabular-nums">{formatRate(item.maxUploadPerSecond)}</span>
+                          </span>
                         </div>
                       </div>
                     </button>
