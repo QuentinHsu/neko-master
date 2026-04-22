@@ -348,6 +348,7 @@ export function createCollector(
               download: conn.download,
               connections,
               sourceIP,
+              sampleDurationMs: 0,
               timestampMs: now,
             });
             realtimeStore.recordTraffic(
@@ -361,6 +362,7 @@ export function createCollector(
                 rulePayload,
                 upload: conn.upload,
                 download: conn.download,
+                sampleDurationMs: 0,
               },
               connections,
               now
@@ -410,6 +412,7 @@ export function createCollector(
               download: downloadDelta,
               connections,
               sourceIP: existing.sourceIP,
+              sampleDurationMs: Math.max(1, now - existing.lastSeen),
               timestampMs: now,
             });
             realtimeStore.recordTraffic(
@@ -423,6 +426,7 @@ export function createCollector(
                 rulePayload: existing.rulePayload || '',
                 upload: uploadDelta,
                 download: downloadDelta,
+                sampleDurationMs: Math.max(1, now - existing.lastSeen),
               },
               connections,
               now

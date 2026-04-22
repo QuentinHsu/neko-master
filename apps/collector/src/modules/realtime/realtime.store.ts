@@ -29,6 +29,8 @@ type ProxyDelta = {
   totalDownload: number;
   totalConnections: number;
   lastSeen: string;
+  maxUploadPerSecond: number;
+  maxDownloadPerSecond: number;
 };
 
 type DeviceDelta = {
@@ -93,6 +95,7 @@ export type TrafficMeta = {
   rulePayload: string;
   upload: number;
   download: number;
+  sampleDurationMs?: number;
 };
 
 type DomainPageOptions = {
@@ -114,6 +117,14 @@ type IPPageOptions = {
 function toMinuteKey(tsMs: number): string {
   const iso = new Date(tsMs).toISOString();
   return `${iso.slice(0, 16)}:00`;
+}
+
+function calculateBytesPerSecond(bytes: number, sampleDurationMs?: number): number {
+  if (!Number.isFinite(bytes) || bytes <= 0) return 0;
+  if (!Number.isFinite(sampleDurationMs) || sampleDurationMs === undefined || sampleDurationMs <= 0) {
+    return 0;
+  }
+  return Math.max(0, Math.floor((bytes * 1000) / sampleDurationMs));
 }
 
 function bucketMinuteKey(minuteKey: string, bucketMinutes: number): string {
@@ -372,6 +383,14 @@ export class RealtimeStore {
           : meta.rule;
     const fullChain = meta.chains.join(' > ');
     const lastSeen = new Date(timestamp).toISOString();
+    const uploadPerSecond = calculateBytesPerSecond(
+      meta.upload,
+      meta.sampleDurationMs,
+    );
+    const downloadPerSecond = calculateBytesPerSecond(
+      meta.download,
+      meta.sampleDurationMs,
+    );
 
     if (meta.domain) {
       let domainMap = this.domainByBackend.get(backendId);
@@ -443,12 +462,22 @@ export class RealtimeStore {
       totalDownload: 0,
       totalConnections: 0,
       lastSeen,
+      maxUploadPerSecond: 0,
+      maxDownloadPerSecond: 0,
     };
 
     proxyDelta.totalUpload += meta.upload;
     proxyDelta.totalDownload += meta.download;
     proxyDelta.totalConnections += connections;
     proxyDelta.lastSeen = lastSeen;
+    proxyDelta.maxUploadPerSecond = Math.max(
+      proxyDelta.maxUploadPerSecond,
+      uploadPerSecond,
+    );
+    proxyDelta.maxDownloadPerSecond = Math.max(
+      proxyDelta.maxDownloadPerSecond,
+      downloadPerSecond,
+    );
     proxyMap.set(proxyChain, proxyDelta);
 
     const sourceIP = (meta.sourceIP || '').trim();
@@ -1063,6 +1092,14 @@ export class RealtimeStore {
         existing.totalUpload += delta.totalUpload;
         existing.totalDownload += delta.totalDownload;
         existing.totalConnections += delta.totalConnections;
+        existing.maxUploadPerSecond = Math.max(
+          existing.maxUploadPerSecond ?? 0,
+          delta.maxUploadPerSecond,
+        );
+        existing.maxDownloadPerSecond = Math.max(
+          existing.maxDownloadPerSecond ?? 0,
+          delta.maxDownloadPerSecond,
+        );
         if (delta.lastSeen > existing.lastSeen) {
           existing.lastSeen = delta.lastSeen;
         }
@@ -1073,6 +1110,8 @@ export class RealtimeStore {
           totalDownload: delta.totalDownload,
           totalConnections: delta.totalConnections,
           lastSeen: delta.lastSeen,
+          maxUploadPerSecond: delta.maxUploadPerSecond,
+          maxDownloadPerSecond: delta.maxDownloadPerSecond,
         });
       }
     }

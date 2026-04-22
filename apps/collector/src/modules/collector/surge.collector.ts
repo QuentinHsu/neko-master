@@ -544,6 +544,7 @@ export function createSurgeCollector(
               download: currentDownload,
               connections,
               sourceIP,
+              sampleDurationMs: 0,
               timestampMs: req.time || now,
             });
             realtimeStore.recordTraffic(
@@ -557,6 +558,7 @@ export function createSurgeCollector(
                 rulePayload: rulePayload || "",
                 upload: currentUpload,
                 download: currentDownload,
+                sampleDurationMs: 0,
               },
               connections,
               now
@@ -636,6 +638,7 @@ export function createSurgeCollector(
               download: downloadDelta,
               connections,
               sourceIP: existing.sourceIP,
+              sampleDurationMs: Math.max(1, now - existing.lastSeen),
               timestampMs: req.time || now,
             });
             realtimeStore.recordTraffic(
@@ -649,6 +652,7 @@ export function createSurgeCollector(
                 rulePayload: existing.rulePayload || "",
                 upload: uploadDelta,
                 download: downloadDelta,
+                sampleDurationMs: Math.max(1, now - existing.lastSeen),
               },
               connections,
               now

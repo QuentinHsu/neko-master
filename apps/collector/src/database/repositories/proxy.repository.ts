@@ -13,6 +13,7 @@ export class ProxyRepository extends BaseRepository {
   }
 
   getProxyStats(backendId: number, start?: string, end?: string): ProxyStats[] {
+    const nodePeakMap = this.loadNodePeakMap(backendId, start, end);
     const range = this.parseMinuteRange(start, end);
     if (range) {
       const resolved = this.resolveFactTable(start!, end!);
@@ -22,7 +23,17 @@ export class ProxyRepository extends BaseRepository {
         FROM ${resolved.table} WHERE backend_id = ? AND ${resolved.timeCol} >= ? AND ${resolved.timeCol} <= ?
         GROUP BY chain ORDER BY (SUM(upload) + SUM(download)) DESC
       `);
-      return this.aggregateProxyStatsByFirstHop(stmt.all(backendId, resolved.startKey, resolved.endKey) as ProxyStats[]);
+      const rows = this.aggregateProxyStatsByFirstHop(
+        stmt.all(backendId, resolved.startKey, resolved.endKey) as ProxyStats[],
+      );
+      return rows.map((row) => {
+        const peak = nodePeakMap.get(row.chain);
+        return {
+          ...row,
+          maxUploadPerSecond: peak?.maxUploadPerSecond ?? 0,
+          maxDownloadPerSecond: peak?.maxDownloadPerSecond ?? 0,
+        };
+      });
     }
 
     const stmt = this.db.prepare(`
@@ -30,7 +41,15 @@ export class ProxyRepository extends BaseRepository {
              total_connections as totalConnections, last_seen as lastSeen
       FROM proxy_stats WHERE backend_id = ? ORDER BY (total_upload + total_download) DESC
     `);
-    return this.aggregateProxyStatsByFirstHop(stmt.all(backendId) as ProxyStats[]);
+    const rows = this.aggregateProxyStatsByFirstHop(stmt.all(backendId) as ProxyStats[]);
+    return rows.map((row) => {
+      const peak = nodePeakMap.get(row.chain);
+      return {
+        ...row,
+        maxUploadPerSecond: peak?.maxUploadPerSecond ?? 0,
+        maxDownloadPerSecond: peak?.maxDownloadPerSecond ?? 0,
+      };
+    });
   }
 
   getProxyDomains(backendId: number, chain: string, limit = 50, start?: string, end?: string): DomainStats[] {

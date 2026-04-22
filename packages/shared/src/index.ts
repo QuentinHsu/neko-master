@@ -97,6 +97,8 @@ export interface ProxyStats {
   totalDownload: number;
   totalConnections: number;
   lastSeen: string;
+  maxUploadPerSecond?: number;
+  maxDownloadPerSecond?: number;
 }
 
 export interface DeviceStats {
@@ -150,6 +152,8 @@ export interface RuleChainFlowAll {
     totalUpload: number;
     totalDownload: number;
     totalConnections: number;
+    maxUploadPerSecond?: number;
+    maxDownloadPerSecond?: number;
     rules: string[];
   }>;
   links: Array<{

@@ -29,6 +29,30 @@ export abstract class BaseRepository {
   }
 
   /**
+   * Convert a Date to second key format (YYYY-MM-DDTHH:MM:SS)
+   */
+  protected toSecondKey(date: Date): string {
+    return date.toISOString().slice(0, 19);
+  }
+
+  protected calculateBytesPerSecond(
+    bytes: number,
+    sampleDurationMs?: number,
+  ): number {
+    if (!Number.isFinite(bytes) || bytes <= 0) {
+      return 0;
+    }
+    if (
+      !Number.isFinite(sampleDurationMs) ||
+      sampleDurationMs === undefined ||
+      sampleDurationMs <= 0
+    ) {
+      return 0;
+    }
+    return Math.max(0, Math.floor((bytes * 1000) / sampleDurationMs));
+  }
+
+  /**
    * Resolve which fact table to use based on the time range span.
    * For ranges > 6 hours, uses hourly_dim_stats (which is written to in real-time).
    * The start boundary is rounded down to the hour, introducing up to ~59 min of extra
@@ -393,6 +417,14 @@ export abstract class BaseRepository {
         existing.totalUpload += row.totalUpload;
         existing.totalDownload += row.totalDownload;
         existing.totalConnections += row.totalConnections;
+        existing.maxUploadPerSecond = Math.max(
+          existing.maxUploadPerSecond ?? 0,
+          row.maxUploadPerSecond ?? 0,
+        );
+        existing.maxDownloadPerSecond = Math.max(
+          existing.maxDownloadPerSecond ?? 0,
+          row.maxDownloadPerSecond ?? 0,
+        );
         if (row.lastSeen > existing.lastSeen) {
           existing.lastSeen = row.lastSeen;
         }
@@ -403,12 +435,58 @@ export abstract class BaseRepository {
           totalDownload: row.totalDownload,
           totalConnections: row.totalConnections,
           lastSeen: row.lastSeen,
+          maxUploadPerSecond: row.maxUploadPerSecond ?? 0,
+          maxDownloadPerSecond: row.maxDownloadPerSecond ?? 0,
         });
       }
     }
 
     return Array.from(merged.values()).sort(
       (a, b) => (b.totalDownload + b.totalUpload) - (a.totalDownload + a.totalUpload),
+    );
+  }
+
+  protected loadNodePeakMap(
+    backendId: number,
+    start?: string,
+    end?: string,
+  ): Map<string, { maxUploadPerSecond: number; maxDownloadPerSecond: number }> {
+    const range = this.parseMinuteRange(start, end);
+    const rows = range
+      ? (this.db.prepare(`
+          SELECT
+            node,
+            MAX(max_upload_per_second) AS maxUploadPerSecond,
+            MAX(max_download_per_second) AS maxDownloadPerSecond
+          FROM minute_node_stats
+          WHERE backend_id = ? AND minute >= ? AND minute <= ?
+          GROUP BY node
+        `).all(backendId, this.toMinuteKey(new Date(start!)), this.toMinuteKey(new Date(end!))) as Array<{
+          node: string;
+          maxUploadPerSecond: number;
+          maxDownloadPerSecond: number;
+        }>)
+      : (this.db.prepare(`
+          SELECT
+            node,
+            max_upload_per_second AS maxUploadPerSecond,
+            max_download_per_second AS maxDownloadPerSecond
+          FROM node_stats
+          WHERE backend_id = ?
+        `).all(backendId) as Array<{
+          node: string;
+          maxUploadPerSecond: number;
+          maxDownloadPerSecond: number;
+        }>);
+
+    return new Map(
+      rows.map((row) => [
+        row.node,
+        {
+          maxUploadPerSecond: Number(row.maxUploadPerSecond || 0),
+          maxDownloadPerSecond: Number(row.maxDownloadPerSecond || 0),
+        },
+      ]),
     );
   }
 

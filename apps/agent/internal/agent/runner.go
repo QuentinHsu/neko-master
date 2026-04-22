@@ -446,6 +446,7 @@ func (r *Runner) ingestSnapshots(snapshots []domain.FlowSnapshot, nowMs int64) {
 
 		deltaUp := s.Upload
 		deltaDown := s.Download
+		sampleDurationMs := int64(0)
 		if hasPrev {
 			if s.Upload >= prev.LastUpload {
 				deltaUp = s.Upload - prev.LastUpload
@@ -456,6 +457,9 @@ func (r *Runner) ingestSnapshots(snapshots []domain.FlowSnapshot, nowMs int64) {
 				deltaDown = s.Download - prev.LastDown
 			} else {
 				deltaDown = 0
+			}
+			if nowMs > prev.LastSeenMs {
+				sampleDurationMs = nowMs - prev.LastSeenMs
 			}
 		}
 
@@ -487,17 +491,18 @@ func (r *Runner) ingestSnapshots(snapshots []domain.FlowSnapshot, nowMs int64) {
 		}
 
 		updates = append(updates, domain.TrafficUpdate{
-			Domain:      domainName,
-			IP:          ip,
-			Chain:       firstChain(chains),
-			Chains:      cloneStringSlice(chains),
-			Rule:        rule,
-			RulePayload: rulePayload,
-			Upload:      deltaUp,
-			Download:    deltaDown,
-			Connections: connections,
-			SourceIP:    sourceIP,
-			TimestampMs: ts,
+			Domain:           domainName,
+			IP:               ip,
+			Chain:            firstChain(chains),
+			Chains:           cloneStringSlice(chains),
+			Rule:             rule,
+			RulePayload:      rulePayload,
+			Upload:           deltaUp,
+			Download:         deltaDown,
+			Connections:      connections,
+			SourceIP:         sourceIP,
+			SampleDurationMs: sampleDurationMs,
+			TimestampMs:      ts,
 		})
 	}
 

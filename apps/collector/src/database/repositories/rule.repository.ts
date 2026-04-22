@@ -403,11 +403,12 @@ export class RuleRepository extends BaseRepository {
     realtimeRows?: Array<{ rule: string; chain: string; totalUpload: number; totalDownload: number; totalConnections: number }>,
     proxyConfig?: Record<string, { now?: string }>,
   ): {
-    nodes: Array<{ name: string; layer: number; nodeType: 'rule' | 'group' | 'proxy'; totalUpload: number; totalDownload: number; totalConnections: number; rules: string[] }>;
+    nodes: Array<{ name: string; layer: number; nodeType: 'rule' | 'group' | 'proxy'; totalUpload: number; totalDownload: number; totalConnections: number; maxUploadPerSecond: number; maxDownloadPerSecond: number; rules: string[] }>;
     links: Array<{ source: number; target: number; rules: string[] }>;
     rulePaths: Record<string, { nodeIndices: number[]; linkIndices: number[] }>;
     maxLayer: number;
   } {
+    const nodePeakMap = this.loadNodePeakMap(backendId, start, end);
     const range = this.parseMinuteRange(start, end);
     let rows: Array<{ rule: string; chain: string; totalUpload: number; totalDownload: number; totalConnections: number }>;
 
@@ -548,7 +549,10 @@ export class RuleRepository extends BaseRepository {
     const nodes = sortedNodeEntries.map(([name, data]) => ({
       name, layer: data.layer, nodeType: nodeTypeMap.get(name)!,
       totalUpload: data.totalUpload, totalDownload: data.totalDownload,
-      totalConnections: data.totalConnections, rules: Array.from(data.rules),
+      totalConnections: data.totalConnections,
+      maxUploadPerSecond: nodePeakMap.get(name)?.maxUploadPerSecond ?? 0,
+      maxDownloadPerSecond: nodePeakMap.get(name)?.maxDownloadPerSecond ?? 0,
+      rules: Array.from(data.rules),
     }));
 
     const nodeIndexMap = new Map(nodes.map((n, i) => [n.name, i]));

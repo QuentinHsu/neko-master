@@ -18,6 +18,7 @@ export interface TrafficUpdate {
   download: number;
   connections?: number;
   sourceIP?: string;
+  sampleDurationMs?: number;
   timestampMs?: number;
 }
 
@@ -33,6 +34,133 @@ export class TrafficWriterRepository extends BaseRepository {
     const safe =
       typeof value === 'number' && Number.isFinite(value) ? value : 1;
     return Math.max(0, Math.floor(safe));
+  }
+
+  private buildNodeRateMaps(updates: TrafficUpdate[]): {
+    minuteNodeMap: Map<string, { minute: string; node: string; maxUploadPerSecond: number; maxDownloadPerSecond: number; lastSeen: string }>;
+    nodePeakMap: Map<string, { node: string; maxUploadPerSecond: number; maxDownloadPerSecond: number; lastSeen: string }>;
+  } {
+    const nodeSecondMap = new Map<string, {
+      minute: string;
+      node: string;
+      uploadPerSecond: number;
+      downloadPerSecond: number;
+      lastSeen: string;
+    }>();
+
+    for (const update of updates) {
+      const uploadPerSecond = this.calculateBytesPerSecond(
+        update.upload,
+        update.sampleDurationMs,
+      );
+      const downloadPerSecond = this.calculateBytesPerSecond(
+        update.download,
+        update.sampleDurationMs,
+      );
+      if (uploadPerSecond <= 0 && downloadPerSecond <= 0) {
+        continue;
+      }
+
+      const timestamp = new Date(update.timestampMs ?? Date.now());
+      const secondKey = this.toSecondKey(timestamp);
+      const minuteKey = this.toMinuteKey(timestamp);
+      const lastSeen = timestamp.toISOString();
+      const ruleName =
+        update.chains.length > 1
+          ? update.chains[update.chains.length - 1]
+          : update.rulePayload
+            ? `${update.rule}(${update.rulePayload})`
+            : update.rule;
+      const fullChain = update.chains.join(' > ') || update.chain || 'DIRECT';
+      const flowPath = this.buildRuleFlowPath(ruleName, fullChain);
+      if (flowPath.length === 0) {
+        continue;
+      }
+
+      for (const node of flowPath) {
+        const key = `${secondKey}:${node}`;
+        const existing = nodeSecondMap.get(key);
+        if (existing) {
+          existing.uploadPerSecond += uploadPerSecond;
+          existing.downloadPerSecond += downloadPerSecond;
+          if (lastSeen > existing.lastSeen) {
+            existing.lastSeen = lastSeen;
+          }
+        } else {
+          nodeSecondMap.set(key, {
+            minute: minuteKey,
+            node,
+            uploadPerSecond,
+            downloadPerSecond,
+            lastSeen,
+          });
+        }
+      }
+    }
+
+    const minuteNodeMap = new Map<string, {
+      minute: string;
+      node: string;
+      maxUploadPerSecond: number;
+      maxDownloadPerSecond: number;
+      lastSeen: string;
+    }>();
+    const nodePeakMap = new Map<string, {
+      node: string;
+      maxUploadPerSecond: number;
+      maxDownloadPerSecond: number;
+      lastSeen: string;
+    }>();
+
+    for (const item of nodeSecondMap.values()) {
+      const minuteKey = `${item.minute}:${item.node}`;
+      const minuteExisting = minuteNodeMap.get(minuteKey);
+      if (minuteExisting) {
+        minuteExisting.maxUploadPerSecond = Math.max(
+          minuteExisting.maxUploadPerSecond,
+          item.uploadPerSecond,
+        );
+        minuteExisting.maxDownloadPerSecond = Math.max(
+          minuteExisting.maxDownloadPerSecond,
+          item.downloadPerSecond,
+        );
+        if (item.lastSeen > minuteExisting.lastSeen) {
+          minuteExisting.lastSeen = item.lastSeen;
+        }
+      } else {
+        minuteNodeMap.set(minuteKey, {
+          minute: item.minute,
+          node: item.node,
+          maxUploadPerSecond: item.uploadPerSecond,
+          maxDownloadPerSecond: item.downloadPerSecond,
+          lastSeen: item.lastSeen,
+        });
+      }
+
+      const nodeExisting = nodePeakMap.get(item.node);
+      if (nodeExisting) {
+        nodeExisting.maxUploadPerSecond = Math.max(
+          nodeExisting.maxUploadPerSecond,
+          item.uploadPerSecond,
+        );
+        nodeExisting.maxDownloadPerSecond = Math.max(
+          nodeExisting.maxDownloadPerSecond,
+          item.downloadPerSecond,
+        );
+        if (item.lastSeen > nodeExisting.lastSeen) {
+          nodeExisting.lastSeen = item.lastSeen;
+        }
+      } else {
+        nodePeakMap.set(item.node, {
+          node: item.node,
+          maxUploadPerSecond: item.uploadPerSecond,
+          maxDownloadPerSecond: item.downloadPerSecond,
+          lastSeen: item.lastSeen,
+        });
+      }
+    }
+
+    return { minuteNodeMap, nodePeakMap };
   }
 
   private prepareSingleStmts() {
@@ -129,6 +257,28 @@ export class TrafficWriterRepository extends BaseRepository {
         ON CONFLICT(backend_id, hour, domain, ip, source_ip, chain, rule) DO UPDATE SET
           upload = upload + @upload, download = download + @download, connections = connections + 1
       `),
+      minuteNodeUpsert: this.db.prepare(`
+        INSERT INTO minute_node_stats (backend_id, minute, node, max_upload_per_second, max_download_per_second, last_seen)
+        VALUES (@backendId, @minute, @node, @maxUploadPerSecond, @maxDownloadPerSecond, @lastSeen)
+        ON CONFLICT(backend_id, minute, node) DO UPDATE SET
+          max_upload_per_second = MAX(max_upload_per_second, @maxUploadPerSecond),
+          max_download_per_second = MAX(max_download_per_second, @maxDownloadPerSecond),
+          last_seen = CASE
+            WHEN minute_node_stats.last_seen IS NULL OR minute_node_stats.last_seen < @lastSeen THEN @lastSeen
+            ELSE minute_node_stats.last_seen
+          END
+      `),
+      nodeStatsUpsert: this.db.prepare(`
+        INSERT INTO node_stats (backend_id, node, max_upload_per_second, max_download_per_second, last_seen)
+        VALUES (@backendId, @node, @maxUploadPerSecond, @maxDownloadPerSecond, @lastSeen)
+        ON CONFLICT(backend_id, node) DO UPDATE SET
+          max_upload_per_second = MAX(max_upload_per_second, @maxUploadPerSecond),
+          max_download_per_second = MAX(max_download_per_second, @maxDownloadPerSecond),
+          last_seen = CASE
+            WHEN node_stats.last_seen IS NULL OR node_stats.last_seen < @lastSeen THEN @lastSeen
+            ELSE node_stats.last_seen
+          END
+      `),
     };
   }
 
@@ -151,6 +301,7 @@ export class TrafficWriterRepository extends BaseRepository {
                      update.rulePayload ? `${update.rule}(${update.rulePayload})` : update.rule;
     const finalProxy = update.chains.length > 0 ? update.chains[0] : 'DIRECT';
     const fullChain = update.chains.join(' > ') || update.chain || 'DIRECT';
+    const { minuteNodeMap, nodePeakMap } = this.buildNodeRateMaps([update]);
     const s = this.singleStmts;
 
     const transaction = this.db.transaction(() => {
@@ -187,6 +338,13 @@ export class TrafficWriterRepository extends BaseRepository {
       const dimParams = { backendId, domain: update.domain || '', ip: update.ip || '', sourceIP: update.sourceIP || '', chain: fullChain, rule: ruleName, upload: update.upload, download: update.download };
       s.minuteDimUpsert.run({ ...dimParams, minute });
       s.hourlyDimUpsert.run({ ...dimParams, hour });
+
+      for (const data of minuteNodeMap.values()) {
+        s.minuteNodeUpsert.run({ backendId, ...data });
+      }
+      for (const data of nodePeakMap.values()) {
+        s.nodeStatsUpsert.run({ backendId, ...data });
+      }
     });
 
     transaction();
@@ -221,6 +379,7 @@ export class TrafficWriterRepository extends BaseRepository {
     const deviceMap = new Map<string, { sourceIP: string; upload: number; download: number; count: number }>();
     const deviceDomainMap = new Map<string, { sourceIP: string; domain: string; upload: number; download: number; count: number }>();
     const deviceIPMap = new Map<string, { sourceIP: string; ip: string; upload: number; download: number; count: number }>();
+    const { minuteNodeMap, nodePeakMap } = this.buildNodeRateMaps(updates);
 
     // Cache Date→key conversions: many updates share the same timestampMs
     const timeKeyCache = new Map<number, { hourKey: string; minuteKey: string }>();
@@ -687,6 +846,36 @@ export class TrafficWriterRepository extends BaseRepository {
             for (const domain of data.domains) { ipProxyDomainStmt.run({ backendId, ip: data.ip, chain: data.chain, domain }); }
           }
         }
+      }
+
+      const minuteNodeStmt = this.db.prepare(`
+        INSERT INTO minute_node_stats (backend_id, minute, node, max_upload_per_second, max_download_per_second, last_seen)
+        VALUES (@backendId, @minute, @node, @maxUploadPerSecond, @maxDownloadPerSecond, @lastSeen)
+        ON CONFLICT(backend_id, minute, node) DO UPDATE SET
+          max_upload_per_second = MAX(max_upload_per_second, @maxUploadPerSecond),
+          max_download_per_second = MAX(max_download_per_second, @maxDownloadPerSecond),
+          last_seen = CASE
+            WHEN minute_node_stats.last_seen IS NULL OR minute_node_stats.last_seen < @lastSeen THEN @lastSeen
+            ELSE minute_node_stats.last_seen
+          END
+      `);
+      for (const [, data] of minuteNodeMap) {
+        minuteNodeStmt.run({ backendId, ...data });
+      }
+
+      const nodeStatsStmt = this.db.prepare(`
+        INSERT INTO node_stats (backend_id, node, max_upload_per_second, max_download_per_second, last_seen)
+        VALUES (@backendId, @node, @maxUploadPerSecond, @maxDownloadPerSecond, @lastSeen)
+        ON CONFLICT(backend_id, node) DO UPDATE SET
+          max_upload_per_second = MAX(max_upload_per_second, @maxUploadPerSecond),
+          max_download_per_second = MAX(max_download_per_second, @maxDownloadPerSecond),
+          last_seen = CASE
+            WHEN node_stats.last_seen IS NULL OR node_stats.last_seen < @lastSeen THEN @lastSeen
+            ELSE node_stats.last_seen
+          END
+      `);
+      for (const [, data] of nodePeakMap) {
+        nodeStatsStmt.run({ backendId, ...data });
       }
     });
     tx2();

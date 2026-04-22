@@ -59,6 +59,7 @@ type AgentTrafficUpdatePayload = {
   download?: number;
   connections?: number;
   sourceIP?: string;
+  sampleDurationMs?: number;
   timestampMs?: number;
 };
 
@@ -465,6 +466,9 @@ export async function createApp(options: AppOptions) {
     const timestampMs = Number.isFinite(raw.timestampMs)
       ? Math.max(0, Math.floor(raw.timestampMs || 0))
       : Date.now();
+    const sampleDurationMs = Number.isFinite(raw.sampleDurationMs)
+      ? Math.max(0, Math.floor(raw.sampleDurationMs || 0))
+      : undefined;
     const connections = Number.isFinite(raw.connections)
       ? Math.max(0, Math.floor(raw.connections || 0))
       : undefined;
@@ -480,6 +484,7 @@ export async function createApp(options: AppOptions) {
       download,
       connections,
       sourceIP: String(raw.sourceIP || '').trim().slice(0, 64),
+      sampleDurationMs,
       timestampMs,
     };
   };
@@ -721,6 +726,7 @@ export async function createApp(options: AppOptions) {
         download: update.download,
         connections,
         sourceIP: update.sourceIP,
+        sampleDurationMs: update.sampleDurationMs,
         timestampMs: update.timestampMs,
       });
 
@@ -735,6 +741,7 @@ export async function createApp(options: AppOptions) {
           rulePayload: update.rulePayload,
           upload: update.upload,
           download: update.download,
+          sampleDurationMs: update.sampleDurationMs,
         },
         connections,
         update.timestampMs || Date.now(),

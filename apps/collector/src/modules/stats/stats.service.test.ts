@@ -33,6 +33,7 @@ describe('StatsService', () => {
         upload: 500,
         download: 3000,
         sourceIP: '192.168.1.10',
+        sampleDurationMs: 1000,
         timestampMs: Date.now(),
       },
       {
@@ -45,6 +46,7 @@ describe('StatsService', () => {
         upload: 200,
         download: 1500,
         sourceIP: '192.168.1.10',
+        sampleDurationMs: 1000,
         timestampMs: Date.now(),
       },
       {
@@ -57,6 +59,7 @@ describe('StatsService', () => {
         upload: 100,
         download: 800,
         sourceIP: '192.168.1.20',
+        sampleDurationMs: 1000,
         timestampMs: Date.now(),
       },
     ]);
@@ -137,6 +140,44 @@ describe('StatsService', () => {
       const proxyNames = proxies.map(p => p.chain);
       expect(proxyNames).toContain('DIRECT');
     });
+
+    it('should expose max bytes-per-second peaks for proxy nodes', () => {
+      const now = Date.now();
+      db.batchUpdateTrafficStats(backendId, [
+        {
+          domain: 'fast.example',
+          ip: '1.1.1.1',
+          chain: 'ProxyPeak',
+          chains: ['ProxyPeak', 'Match'],
+          rule: 'Match',
+          rulePayload: '',
+          upload: 240,
+          download: 1200,
+          sourceIP: '192.168.1.8',
+          sampleDurationMs: 2000,
+          timestampMs: now,
+        },
+        {
+          domain: 'burst.example',
+          ip: '1.1.1.2',
+          chain: 'ProxyPeak',
+          chains: ['ProxyPeak', 'Match'],
+          rule: 'Match',
+          rulePayload: '',
+          upload: 300,
+          download: 900,
+          sourceIP: '192.168.1.9',
+          sampleDurationMs: 1000,
+          timestampMs: now,
+        },
+      ]);
+
+      const proxies = service.getProxyStats(backendId, { active: false });
+      const proxy = proxies.find((item) => item.chain === 'ProxyPeak');
+      expect(proxy).toBeDefined();
+      expect(proxy?.maxUploadPerSecond).toBe(420);
+      expect(proxy?.maxDownloadPerSecond).toBe(1500);
+    });
   });
 
   describe('getDeviceStats', () => {
@@ -177,6 +218,48 @@ describe('StatsService', () => {
       }
       expect(result.rulePaths['YouTube|Media']).toBeDefined();
       expect(result.rulePaths['YouTube|Media'].linkIndices.length).toBeGreaterThan(0);
+    });
+
+    it('should include node-level max bytes-per-second peaks', () => {
+      const now = Date.now();
+      db.batchUpdateTrafficStats(backendId, [
+        {
+          domain: 'video.example',
+          ip: '203.0.113.1',
+          chain: 'ProxyPeak',
+          chains: ['ProxyPeak', 'MediaGroup', 'StreamRule'],
+          rule: 'RULE-SET',
+          rulePayload: 'stream',
+          upload: 300,
+          download: 900,
+          sourceIP: '192.168.1.66',
+          sampleDurationMs: 1000,
+          timestampMs: now,
+        },
+        {
+          domain: 'video2.example',
+          ip: '203.0.113.2',
+          chain: 'ProxyPeak',
+          chains: ['ProxyPeak', 'MediaGroup', 'StreamRule'],
+          rule: 'RULE-SET',
+          rulePayload: 'stream',
+          upload: 200,
+          download: 600,
+          sourceIP: '192.168.1.67',
+          sampleDurationMs: 1000,
+          timestampMs: now,
+        },
+      ]);
+
+      const result = service.getAllRuleChainFlows(backendId, { active: false });
+      const proxyNode = result.nodes.find((node: { name: string }) => node.name === 'ProxyPeak');
+      const groupNode = result.nodes.find((node: { name: string }) => node.name === 'MediaGroup');
+      expect(proxyNode).toBeDefined();
+      expect(groupNode).toBeDefined();
+      expect(proxyNode?.maxUploadPerSecond).toBe(500);
+      expect(proxyNode?.maxDownloadPerSecond).toBe(1500);
+      expect(groupNode?.maxUploadPerSecond).toBe(500);
+      expect(groupNode?.maxDownloadPerSecond).toBe(1500);
     });
   });
 

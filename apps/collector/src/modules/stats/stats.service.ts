@@ -878,19 +878,12 @@ export class StatsService {
     backendId: number,
     timeRange: TimeRange,
   ): Promise<ProxyStats[]> {
-    const shouldUseCH = this.shouldUseClickHouse(timeRange);
-    const stats =
-      shouldUseCH && timeRange.start && timeRange.end
-        ? await this.clickHouseReader.getProxyStats(
-            backendId,
-            timeRange.start,
-            timeRange.end,
-          )
-        : null;
-    const resolvedStats =
-      (stats as ProxyStats[] | null) ||
-      this.db.getProxyStats(backendId, timeRange.start, timeRange.end);
-    this.recordRoute('proxies', stats ? 'clickhouse' : 'sqlite');
+    const resolvedStats = this.db.getProxyStats(
+      backendId,
+      timeRange.start,
+      timeRange.end,
+    );
+    this.recordRoute('proxies', 'sqlite');
     if (this.shouldIncludeRealtime(timeRange)) {
       return this.realtimeStore.mergeProxyStats(backendId, resolvedStats);
     }
@@ -1188,26 +1181,10 @@ export class StatsService {
     backendId: number,
     timeRange: TimeRange,
   ): Promise<any> {
-    const shouldUseCH = this.shouldUseClickHouseForOptionalRange(timeRange);
     const realtimeRows = this.shouldIncludeRealtime(timeRange) ? this.realtimeStore.getRuleChainRows(backendId) : undefined;
     // Get proxy config for Agent mode to enrich short chains
     const agentConfig = this.realtimeStore.getAgentConfig(backendId);
     const proxyConfig = agentConfig?.proxies;
-    
-    if (shouldUseCH) {
-      const ch = await this.clickHouseReader.getAllRuleChainFlows(
-        backendId,
-        timeRange.start,
-        timeRange.end,
-        realtimeRows,
-      );
-      if (ch) {
-        this.recordRoute('rules.chain-flow-all', 'clickhouse');
-        return ch;
-      }
-    }
-
-    this.failIfStrictFallback('rules.chain-flow-all');
     this.recordRoute('rules.chain-flow-all', 'sqlite');
     return this.db.getAllRuleChainFlows(backendId, timeRange.start, timeRange.end, realtimeRows, proxyConfig);
   }

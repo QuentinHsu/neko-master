@@ -32,6 +32,7 @@ export interface TrafficUpdate {
   download: number;
   connections?: number;
   sourceIP?: string;
+  sampleDurationMs?: number;
   timestampMs?: number;
 }
 

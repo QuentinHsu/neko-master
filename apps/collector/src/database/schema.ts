@@ -227,6 +227,33 @@ export const SCHEMA = {
     );
   `,
 
+  // Minute-level node peak throughput (bytes/sec) for rule-chain nodes
+  MINUTE_NODE_STATS: `
+    CREATE TABLE IF NOT EXISTS minute_node_stats (
+      backend_id INTEGER NOT NULL,
+      minute TEXT NOT NULL,
+      node TEXT NOT NULL,
+      max_upload_per_second INTEGER DEFAULT 0,
+      max_download_per_second INTEGER DEFAULT 0,
+      last_seen DATETIME,
+      PRIMARY KEY (backend_id, minute, node),
+      FOREIGN KEY (backend_id) REFERENCES backend_configs(id) ON DELETE CASCADE
+    );
+  `,
+
+  // All-time node peak throughput (bytes/sec) for fast summary queries
+  NODE_STATS: `
+    CREATE TABLE IF NOT EXISTS node_stats (
+      backend_id INTEGER NOT NULL,
+      node TEXT NOT NULL,
+      max_upload_per_second INTEGER DEFAULT 0,
+      max_download_per_second INTEGER DEFAULT 0,
+      last_seen DATETIME,
+      PRIMARY KEY (backend_id, node),
+      FOREIGN KEY (backend_id) REFERENCES backend_configs(id) ON DELETE CASCADE
+    );
+  `,
+
   // Minute-level country facts for range-based country queries
   MINUTE_COUNTRY_STATS: `
     CREATE TABLE IF NOT EXISTS minute_country_stats (
@@ -481,6 +508,9 @@ export const INDEXES = [
   `CREATE INDEX IF NOT EXISTS idx_minute_dim_backend_minute_chain ON minute_dim_stats(backend_id, minute, chain);`,
   `CREATE INDEX IF NOT EXISTS idx_minute_dim_backend_minute_rule ON minute_dim_stats(backend_id, minute, rule);`,
   `CREATE INDEX IF NOT EXISTS idx_minute_dim_backend_minute_source ON minute_dim_stats(backend_id, minute, source_ip);`,
+  `CREATE INDEX IF NOT EXISTS idx_minute_node_backend_minute ON minute_node_stats(backend_id, minute);`,
+  `CREATE INDEX IF NOT EXISTS idx_minute_node_backend_node ON minute_node_stats(backend_id, node);`,
+  `CREATE INDEX IF NOT EXISTS idx_node_stats_backend_node ON node_stats(backend_id, node);`,
   `CREATE INDEX IF NOT EXISTS idx_minute_country_backend_minute ON minute_country_stats(backend_id, minute);`,
 
   // Hourly dim stats indexes
@@ -548,6 +578,8 @@ export function getAllSchemaStatements(): string[] {
     SCHEMA.CONNECTION_LOGS,
     SCHEMA.MINUTE_STATS,
     SCHEMA.MINUTE_DIM_STATS,
+    SCHEMA.MINUTE_NODE_STATS,
+    SCHEMA.NODE_STATS,
     SCHEMA.MINUTE_COUNTRY_STATS,
     SCHEMA.HOURLY_DIM_STATS,
     SCHEMA.HOURLY_COUNTRY_STATS,

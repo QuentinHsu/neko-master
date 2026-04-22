@@ -18,6 +18,8 @@ export type ProxyDelta = {
   totalDownload: number;
   totalConnections: number;
   lastSeen: string;
+  maxUploadPerSecond: number;
+  maxDownloadPerSecond: number;
 };
 
 export type DeviceDelta = {
@@ -78,4 +80,5 @@ export type TrafficMeta = {
   rulePayload: string;
   upload: number;
   download: number;
+  sampleDurationMs?: number;
 };
