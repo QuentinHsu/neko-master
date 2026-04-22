@@ -416,7 +416,7 @@ The script will automatically detect and suggest available ports.
 | `NEXT_PUBLIC_API_URL` | empty | Override frontend API base URL (e.g. `https://api.example.com`) | API is not same-origin `/api` |
 | `NEXT_PUBLIC_WS_URL` | empty | Override frontend WS URL (absolute URL or `/custom_ws`) | Custom WS path/domain |
 | `NEXT_PUBLIC_WS_PORT` | `3002` | WS direct-connection fallback port (**build-time only — setting this at Docker runtime has no effect**; use `WS_EXTERNAL_PORT` instead) | Only for custom source builds |
-| `API_URL` | `http://localhost:3001` | Next.js `/api` rewrite target (mainly source/custom builds) | API listen address changed |
+| `API_URL` | `http://localhost:3001` | Web server `/api` proxy target (mainly source/custom builds) | API listen address changed |
 | `COOKIE_SECRET` | auto-generated | Cookie signing secret; if not fixed, sessions can be invalidated after restart when data dir is not persisted | Strongly recommended in production |
 | `GEOIP_LOOKUP_PROVIDER` | `online` | IP geolocation source (`online` / `local`) | Default to local MMDB lookup |
 | `GEOIP_ONLINE_API_URL` | `https://api.ipinfo.es/ipinfo` | Online IP geolocation API endpoint (must be compatible with `ipinfo.my` response schema) | Set only when you deploy a compatible endpoint |
@@ -441,7 +441,7 @@ The script will automatically detect and suggest available ports.
 ### API / WS Resolution Priority
 
 1. API client base: `runtime-config.API_URL` → `NEXT_PUBLIC_API_URL` → same-origin `/api`
-2. `/api` server-side rewrite target: `API_URL` (default `http://localhost:3001`, applied in Next.js rewrites)
+2. `/api` server-side proxy target: `API_URL` (default `http://localhost:3001`, applied in the Rsbuild dev server and bundled web server)
 3. WS URL: `runtime-config.WS_URL` → `NEXT_PUBLIC_WS_URL` → auto candidates (when `runtime-config.WS_PORT` is set, direct port is preferred; otherwise `/_cm_ws` is tried first)
 4. WS port: `runtime-config.WS_PORT` (from `WS_EXTERNAL_PORT`) → `NEXT_PUBLIC_WS_PORT` → `3002`
 5. In normal deployments, `NEXT_PUBLIC_WS_URL` is usually unnecessary unless you use a custom WS path/domain
@@ -968,17 +968,17 @@ neko-master/
 ├── apps/
 │   ├── collector/          # Data collection service (Node.js + WebSocket)
 │   ├── agent/              # Agent daemon (Go)
-│   └── web/                # Next.js frontend app
+│   └── web/                # Rsbuild frontend app
 └── packages/
     └── shared/             # Shared types and utilities
 ```
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: [Next.js 16](https://nextjs.org/) + [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
+- **Frontend**: [Rsbuild](https://rsbuild.dev/) + [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/)
 - **Charts**: [Recharts](https://recharts.org/)
-- **i18n**: [next-intl](https://next-intl-docs.vercel.app/)
+- **i18n**: built-in locale provider with JSON message catalogs (`zh` / `en`)
 - **Backend**: [Node.js](https://nodejs.org/) + [Fastify](https://www.fastify.io/) + WebSocket
 - **Database**: [SQLite](https://www.sqlite.org/) ([better-sqlite3](https://github.com/WiseLibs/better-sqlite3)) + [ClickHouse](https://clickhouse.com/) (optional)
 - **Build**: [pnpm](https://pnpm.io/) + [Turborepo](https://turbo.build/)

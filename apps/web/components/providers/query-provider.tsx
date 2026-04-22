@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { Suspense, lazy, useState, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import dynamic from "next/dynamic";
 
 import { QUERY_CONFIG } from "@/lib/query-config";
 
 // Dynamically import devtools only on client side to avoid SSR hydration mismatch
-const ReactQueryDevtools = dynamic(
-  () => import("@tanstack/react-query-devtools").then((mod) => mod.ReactQueryDevtools),
-  { ssr: false }
+const ReactQueryDevtools = lazy(() =>
+  import("@tanstack/react-query-devtools").then((mod) => ({
+    default: mod.ReactQueryDevtools,
+  })),
 );
 
 interface QueryProviderProps {
@@ -36,9 +36,10 @@ export function QueryProvider({ children }: QueryProviderProps) {
     <QueryClientProvider client={queryClient}>
       {children}
       {process.env.NODE_ENV === "development" && (
-        <ReactQueryDevtools initialIsOpen={false} />
+        <Suspense fallback={null}>
+          <ReactQueryDevtools initialIsOpen={false} />
+        </Suspense>
       )}
     </QueryClientProvider>
   );
 }
-

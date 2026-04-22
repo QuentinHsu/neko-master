@@ -3,14 +3,14 @@
 
 @font-face {
   font-family: "CMTwemojiFlags";
-  src: url("/fonts/TwemojiMozilla-flags.woff2") format("woff2");
+  src: url("../public/fonts/TwemojiMozilla-flags.woff2") format("woff2");
   font-display: swap;
   unicode-range: U+1F1E6-1F1FF, U+1F3F4, U+E0020-E007F;
 }
 
 @font-face {
   font-family: "CMNotoEmojiFlags";
-  src: url("/fonts/NotoColorEmoji-flagsonly.ttf") format("truetype");
+  src: url("../public/fonts/NotoColorEmoji-flagsonly.ttf") format("truetype");
   font-display: swap;
   unicode-range: U+1F1E6-1F1FF;
 }

@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "target": "ES2017",
     "lib": [
       "dom",
@@ -17,23 +18,27 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@neko-master/shared": [
+        "../../packages/shared/src/index.ts"
+      ],
+      "next-intl": [
+        "./compat/next-intl.tsx"
+      ],
+      "next/navigation": [
+        "./compat/next-navigation.ts"
+      ],
+      "next/image": [
+        "./compat/next-image.tsx"
       ]
     }
   },
   "include": [
-    "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
   "exclude": [

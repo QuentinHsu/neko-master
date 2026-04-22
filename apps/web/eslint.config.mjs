@@ -1,18 +1,33 @@
-import { defineConfig, globalIgnores } from "eslint/config";
-import { default as nextVitals } from "eslint-config-next/core-web-vitals";
-import { default as nextTs } from "eslint-config-next/typescript";
+import js from "@eslint/js";
+import globals from "globals";
+import tseslint from "typescript-eslint";
 
-const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
-  // Override default ignores of eslint-config-next.
-  globalIgnores([
-    // Default ignores of eslint-config-next:
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-  ]),
-]);
-
-export default eslintConfig;
+export default tseslint.config(
+  {
+    ignores: ["dist/**", "build/**", "node_modules/**", "public/**", "server.mjs"],
+  },
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  {
+    files: ["**/*.{ts,tsx,mts}"],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
+    rules: {
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+        },
+      ],
+      "no-constant-condition": "off",
+      "no-constant-binary-expression": "off",
+      "no-useless-assignment": "off",
+    },
+  },
+);

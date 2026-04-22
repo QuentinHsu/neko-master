@@ -1,9 +1,21 @@
-import { defineRouting } from "next-intl/routing";
-import { createNavigation } from "next-intl/navigation";
+import enMessages from "@/messages/en.json";
+import zhMessages from "@/messages/zh.json";
 
-export const routing = defineRouting({
-  locales: ["en", "zh"],
-  defaultLocale: "zh",
-});
+export const locales = ["en", "zh"] as const;
 
-export const { Link, redirect, usePathname, useRouter } = createNavigation(routing);
+export type AppLocale = (typeof locales)[number];
+
+export const defaultLocale: AppLocale = "zh";
+
+export const routing = {
+  locales,
+  defaultLocale,
+};
+
+export function isLocale(value: string | undefined): value is AppLocale {
+  return !!value && locales.includes(value as AppLocale);
+}
+
+export function getMessages(locale: AppLocale) {
+  return locale === "zh" ? zhMessages : enMessages;
+}

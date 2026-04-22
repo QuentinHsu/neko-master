@@ -520,96 +520,61 @@ function getSuggestedServerUrl(): string {
 }
 
 function shellQuote(value: string): string {
-  return `'${String(value).replace(/'/g, `'\"'\"'`)}'`;
+  return `'${String(value).split("'").join(`'"'"'`)}'`;
 }
 
 function buildAgentRunCommand(info: AgentBootstrapInfo, showToken = true): string {
-  let generated = "";
-  {
-    const gatewayUrlWithConfig = buildGatewayUrl(
-      info.type,
-      info.gatewayHost,
-      info.gatewayPort,
-      info.gatewaySsl,
-    );
-    const rawToken = info.token.trim() || "<backend-token>";
-    const backendToken = showToken ? rawToken : "***";
-    const lines = [
-      "./neko-agent \\",
-      "  --server-url " + shellQuote(getSuggestedServerUrl()) + " \\",
-      "  --backend-id " + info.backendId + " \\",
-      "  --backend-token " + shellQuote(backendToken) + " \\",
-      "  --gateway-type " + shellQuote(info.type) + " \\",
-      "  --gateway-url " + shellQuote(gatewayUrlWithConfig),
-    ];
+  const gatewayUrlWithConfig = buildGatewayUrl(
+    info.type,
+    info.gatewayHost,
+    info.gatewayPort,
+    info.gatewaySsl,
+  );
+  const rawToken = info.token.trim() || "<backend-token>";
+  const backendToken = showToken ? rawToken : "***";
+  const lines = [
+    "./neko-agent \\",
+    "  --server-url " + shellQuote(getSuggestedServerUrl()) + " \\",
+    "  --backend-id " + info.backendId + " \\",
+    "  --backend-token " + shellQuote(backendToken) + " \\",
+    "  --gateway-type " + shellQuote(info.type) + " \\",
+    "  --gateway-url " + shellQuote(gatewayUrlWithConfig),
+  ];
 
-    if (info.gatewayToken.trim()) {
-      lines[lines.length - 1] = lines[lines.length - 1] + " \\";
-      lines.push("  --gateway-token " + shellQuote(info.gatewayToken.trim()));
-    }
-
-    generated = lines.join("\n");
+  if (info.gatewayToken.trim()) {
+    lines[lines.length - 1] = lines[lines.length - 1] + " \\";
+    lines.push("  --gateway-token " + shellQuote(info.gatewayToken.trim()));
   }
 
-  const gatewayUrl =
-    info.type === "surge" ? "http://127.0.0.1:9091" : "http://127.0.0.1:9090";
-
-  const _legacy = [
-    "./neko-agent \\",
-    `  --server-url ${getSuggestedServerUrl()} \\`,
-    `  --backend-id ${info.backendId} \\`,
-    `  --backend-token ${info.token} \\`,
-    `  --gateway-type ${info.type} \\`,
-    `  --gateway-url ${gatewayUrl}`,
-  ].join("\n");
-  void _legacy;
-  return generated;
+  return lines.join("\n");
 }
 
 function buildAgentInstallScriptCommand(info: AgentBootstrapInfo, showToken = true): string {
-  let generated = "";
-  {
-    const gatewayUrlWithConfig = buildGatewayUrl(
-      info.type,
-      info.gatewayHost,
-      info.gatewayPort,
-      info.gatewaySsl,
+  const gatewayUrlWithConfig = buildGatewayUrl(
+    info.type,
+    info.gatewayHost,
+    info.gatewayPort,
+    info.gatewaySsl,
+  );
+  const rawToken = info.token.trim() || "<backend-token>";
+  const backendToken = showToken ? rawToken : "***";
+  const lines = [
+    "curl -fsSL " + AGENT_INSTALL_SCRIPT_URL + " \\",
+    "  | env NEKO_SERVER=" + shellQuote(getSuggestedServerUrl()) + " \\",
+    "        NEKO_BACKEND_ID=" + shellQuote(String(info.backendId)) + " \\",
+    "        NEKO_BACKEND_TOKEN=" + shellQuote(backendToken) + " \\",
+    "        NEKO_GATEWAY_TYPE=" + shellQuote(info.type) + " \\",
+    "        NEKO_GATEWAY_URL=" + shellQuote(gatewayUrlWithConfig) + " \\",
+  ];
+
+  if (info.gatewayToken.trim()) {
+    lines.push(
+      "        NEKO_GATEWAY_TOKEN=" + shellQuote(info.gatewayToken.trim()) + " \\",
     );
-    const rawToken = info.token.trim() || "<backend-token>";
-    const backendToken = showToken ? rawToken : "***";
-    const lines = [
-      "curl -fsSL " + AGENT_INSTALL_SCRIPT_URL + " \\",
-      "  | env NEKO_SERVER=" + shellQuote(getSuggestedServerUrl()) + " \\",
-      "        NEKO_BACKEND_ID=" + shellQuote(String(info.backendId)) + " \\",
-      "        NEKO_BACKEND_TOKEN=" + shellQuote(backendToken) + " \\",
-      "        NEKO_GATEWAY_TYPE=" + shellQuote(info.type) + " \\",
-      "        NEKO_GATEWAY_URL=" + shellQuote(gatewayUrlWithConfig) + " \\",
-    ];
-
-    if (info.gatewayToken.trim()) {
-      lines.push(
-        "        NEKO_GATEWAY_TOKEN=" + shellQuote(info.gatewayToken.trim()) + " \\",
-      );
-    }
-
-    lines.push("        sh");
-    generated = lines.join("\n");
   }
 
-  const gatewayUrl =
-    info.type === "surge" ? "http://127.0.0.1:9091" : "http://127.0.0.1:9090";
-
-  const _legacy = [
-    `curl -fsSL ${AGENT_INSTALL_SCRIPT_URL} \\`,
-    `  | env NEKO_SERVER=${shellQuote(getSuggestedServerUrl())} \\`,
-    `        NEKO_BACKEND_ID=${shellQuote(String(info.backendId))} \\`,
-    `        NEKO_BACKEND_TOKEN=${shellQuote(info.token)} \\`,
-    `        NEKO_GATEWAY_TYPE=${shellQuote(info.type)} \\`,
-    `        NEKO_GATEWAY_URL=${shellQuote(gatewayUrl)} \\`,
-    `        sh`,
-  ].join("\n");
-  void _legacy;
-  return generated;
+  lines.push("        sh");
+  return lines.join("\n");
 }
 
 function buildAgentQuickAddCommand(info: AgentBootstrapInfo, showToken = true): string {
@@ -1504,7 +1469,7 @@ export function BackendConfigDialog({
                         : "border-border bg-card",
                       !backend.enabled && "opacity-60",
                     )}>
-                    {false && editingId === backend.id ? (
+                    {editingId === backend.id ? (
                       // Edit Mode
                       <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-3">
@@ -1850,7 +1815,7 @@ export function BackendConfigDialog({
                 )}
 
                 {/* Add New Backend */}
-                {false && (showAddForm || (isFirstTime && backends.length === 0)) ? (
+                {showAddForm || (isFirstTime && backends.length === 0) ? (
                   <div className="p-4 rounded-lg border border-dashed border-border bg-muted/50">
                     <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
                       <Plus className="w-4 h-4" />

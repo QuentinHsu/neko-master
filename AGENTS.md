@@ -13,7 +13,7 @@ Guidance for coding agents working in this monorepo.
 - Package manager: `pnpm` (workspace monorepo).
 - Task runner: `turbo` at repo root.
 - Main apps:
-  - `apps/web`: Next.js 16 + React 19 frontend.
+  - `apps/web`: Rsbuild + React 19 frontend.
   - `apps/collector`: Fastify + WebSocket + SQLite backend service.
 - Shared package:
   - `packages/shared`: shared TypeScript types and utility functions.
@@ -24,7 +24,7 @@ Guidance for coding agents working in this monorepo.
 - TypeScript is strict across packages.
 - Module systems:
   - `apps/collector` and `packages/shared`: ESM (`type: module`, `NodeNext`).
-  - `apps/web`: Next.js/bundler TS config.
+  - `apps/web`: Rsbuild/bundler TS config.
 
 ## Install and Bootstrap
 
@@ -142,12 +142,12 @@ Guidance for coding agents working in this monorepo.
 
 ### Frontend (web) Patterns
 
-- Respect Next.js App Router conventions (`app/[locale]/...`).
-- Add `"use client"` only for client components/hooks that need it.
+- Respect the Rsbuild + SPA entry structure (`src/main.tsx`) while keeping reusable dashboard code under `app/[locale]/...` and `components/`.
+- `"use client"` directives are harmless but optional in the Rsbuild app; preserve them in touched files unless removing them clearly improves readability.
 - Prefer React Query hooks for server state and caching.
 - Keep API contract types aligned with `@neko-master/shared` and `apps/web/lib/api.ts`.
 - Reuse shared utility helpers (`cn`, formatting utilities) instead of ad-hoc duplicates.
-- **i18n**: uses `next-intl` with two locales (`zh` default, `en`).
+- **i18n**: uses a local two-locale provider (`zh` default, `en`) backed by `apps/web/messages/{zh,en}.json`.
   - Translation files: `apps/web/messages/{zh,en}.json`.
   - Routing config: `apps/web/i18n/routing.ts`.
   - Use `useTranslations('namespace')` in components; never hardcode user-facing strings.
