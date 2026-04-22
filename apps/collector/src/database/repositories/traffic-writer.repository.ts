@@ -22,6 +22,11 @@ export interface TrafficUpdate {
   timestampMs?: number;
 }
 
+export interface NodePeakMaps {
+  minuteNodeMap: Map<string, { minute: string; node: string; maxUploadPerSecond: number; maxDownloadPerSecond: number; lastSeen: string }>;
+  nodePeakMap: Map<string, { node: string; maxUploadPerSecond: number; maxDownloadPerSecond: number; lastSeen: string }>;
+}
+
 export class TrafficWriterRepository extends BaseRepository {
   // Cached prepared statements for single-write path (avoids re-compilation per call)
   private _singleStmts: ReturnType<TrafficWriterRepository['prepareSingleStmts']> | null = null;
@@ -350,7 +355,12 @@ export class TrafficWriterRepository extends BaseRepository {
     transaction();
   }
 
-  batchUpdateTrafficStats(backendId: number, updates: TrafficUpdate[], reduceWrites = false) {
+  batchUpdateTrafficStats(
+    backendId: number,
+    updates: TrafficUpdate[],
+    reduceWrites = false,
+    peakMaps?: NodePeakMaps,
+  ) {
     if (updates.length === 0) return;
 
     const now = new Date();
@@ -379,7 +389,8 @@ export class TrafficWriterRepository extends BaseRepository {
     const deviceMap = new Map<string, { sourceIP: string; upload: number; download: number; count: number }>();
     const deviceDomainMap = new Map<string, { sourceIP: string; domain: string; upload: number; download: number; count: number }>();
     const deviceIPMap = new Map<string, { sourceIP: string; ip: string; upload: number; download: number; count: number }>();
-    const { minuteNodeMap, nodePeakMap } = this.buildNodeRateMaps(updates);
+    const { minuteNodeMap, nodePeakMap } =
+      peakMaps ?? this.buildNodeRateMaps(updates);
 
     // Cache Date→key conversions: many updates share the same timestampMs
     const timeKeyCache = new Map<number, { hourKey: string; minuteKey: string }>();

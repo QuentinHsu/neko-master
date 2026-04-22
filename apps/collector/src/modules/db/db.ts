@@ -19,6 +19,7 @@ import {
   DomainRepository,
   BackendRepository,
   HealthRepository,
+  type NodePeakMaps,
 } from '../../database/repositories/index.js';
 
 export interface TrafficUpdate {
@@ -583,7 +584,12 @@ export class StatsDatabase {
 
   // ==================== Traffic Writer ====================
   updateTrafficStats(backendId: number, update: TrafficUpdate) { this.repos.trafficWriter.updateTrafficStats(backendId, update); }
-  batchUpdateTrafficStats(backendId: number, updates: TrafficUpdate[], reduceWrites = false) { this.repos.trafficWriter.batchUpdateTrafficStats(backendId, updates, reduceWrites); }
+  batchUpdateTrafficStats(
+    backendId: number,
+    updates: TrafficUpdate[],
+    reduceWrites = false,
+    peakMaps?: NodePeakMaps,
+  ) { this.repos.trafficWriter.batchUpdateTrafficStats(backendId, updates, reduceWrites, peakMaps); }
 
   // ==================== Domain ====================
   getDomainByName(backendId: number, domain: string) { return this.repos.domain.getDomainByName(backendId, domain); }

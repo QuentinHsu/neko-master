@@ -65,13 +65,180 @@ export interface FlushResult {
   pendingCountryWrite?: Promise<void>;
 }
 
+type NodeSecondRate = {
+  minute: string;
+  node: string;
+  uploadPerSecond: number;
+  downloadPerSecond: number;
+  lastSeen: string;
+};
+
+type NodePeak = {
+  node: string;
+  maxUploadPerSecond: number;
+  maxDownloadPerSecond: number;
+  lastSeen: string;
+};
+
+type MinuteNodePeak = {
+  minute: string;
+  node: string;
+  maxUploadPerSecond: number;
+  maxDownloadPerSecond: number;
+  lastSeen: string;
+};
+
+function toSecondKey(timestampMs?: number): string {
+  return new Date(timestampMs ?? Date.now()).toISOString().slice(0, 19);
+}
+
+function calculateBytesPerSecond(bytes: number, sampleDurationMs?: number): number {
+  if (!Number.isFinite(bytes) || bytes <= 0) return 0;
+  if (!Number.isFinite(sampleDurationMs) || sampleDurationMs === undefined || sampleDurationMs <= 0) {
+    return 0;
+  }
+  return Math.max(0, Math.floor((bytes * 1000) / sampleDurationMs));
+}
+
+function buildFlowPath(update: TrafficUpdate): string[] {
+  const ruleName =
+    update.chains.length > 1
+      ? update.chains[update.chains.length - 1]
+      : update.rulePayload
+        ? `${update.rule}(${update.rulePayload})`
+        : update.rule;
+  const chainParts = (update.chains.join(" > ") || update.chain || "DIRECT")
+    .split(">")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (chainParts.length === 0) {
+    return [];
+  }
+
+  const exactIndex = chainParts.findIndex((part) => part === ruleName);
+  if (exactIndex !== -1) {
+    return chainParts.slice(0, exactIndex + 1).reverse();
+  }
+
+  const reversed = [...chainParts].reverse();
+  if (reversed[0] === ruleName) {
+    return reversed;
+  }
+
+  return [ruleName, ...reversed];
+}
+
 export class BatchBuffer {
   private buffer: Map<string, TrafficUpdate> = new Map();
+  private nodeSecondBuffer: Map<string, NodeSecondRate> = new Map();
   private geoQueue: GeoIPResult[] = [];
   private lastLogTime = 0;
   private logCounter = 0;
 
+  private recordNodeRate(update: TrafficUpdate) {
+    const uploadPerSecond = calculateBytesPerSecond(
+      update.upload,
+      update.sampleDurationMs,
+    );
+    const downloadPerSecond = calculateBytesPerSecond(
+      update.download,
+      update.sampleDurationMs,
+    );
+    if (uploadPerSecond <= 0 && downloadPerSecond <= 0) {
+      return;
+    }
+
+    const flowPath = buildFlowPath(update);
+    if (flowPath.length === 0) {
+      return;
+    }
+
+    const minute = toMinuteKey(update.timestampMs);
+    const second = toSecondKey(update.timestampMs);
+    const lastSeen = new Date(update.timestampMs ?? Date.now()).toISOString();
+
+    for (const node of flowPath) {
+      const key = `${second}:${node}`;
+      const existing = this.nodeSecondBuffer.get(key);
+      if (existing) {
+        existing.uploadPerSecond += uploadPerSecond;
+        existing.downloadPerSecond += downloadPerSecond;
+        if (lastSeen > existing.lastSeen) {
+          existing.lastSeen = lastSeen;
+        }
+      } else {
+        this.nodeSecondBuffer.set(key, {
+          minute,
+          node,
+          uploadPerSecond,
+          downloadPerSecond,
+          lastSeen,
+        });
+      }
+    }
+  }
+
+  private buildNodePeakMaps(): {
+    minuteNodeMap: Map<string, MinuteNodePeak>;
+    nodePeakMap: Map<string, NodePeak>;
+  } {
+    const minuteNodeMap = new Map<string, MinuteNodePeak>();
+    const nodePeakMap = new Map<string, NodePeak>();
+
+    for (const item of this.nodeSecondBuffer.values()) {
+      const minuteKey = `${item.minute}:${item.node}`;
+      const minuteExisting = minuteNodeMap.get(minuteKey);
+      if (minuteExisting) {
+        minuteExisting.maxUploadPerSecond = Math.max(
+          minuteExisting.maxUploadPerSecond,
+          item.uploadPerSecond,
+        );
+        minuteExisting.maxDownloadPerSecond = Math.max(
+          minuteExisting.maxDownloadPerSecond,
+          item.downloadPerSecond,
+        );
+        if (item.lastSeen > minuteExisting.lastSeen) {
+          minuteExisting.lastSeen = item.lastSeen;
+        }
+      } else {
+        minuteNodeMap.set(minuteKey, {
+          minute: item.minute,
+          node: item.node,
+          maxUploadPerSecond: item.uploadPerSecond,
+          maxDownloadPerSecond: item.downloadPerSecond,
+          lastSeen: item.lastSeen,
+        });
+      }
+
+      const nodeExisting = nodePeakMap.get(item.node);
+      if (nodeExisting) {
+        nodeExisting.maxUploadPerSecond = Math.max(
+          nodeExisting.maxUploadPerSecond,
+          item.uploadPerSecond,
+        );
+        nodeExisting.maxDownloadPerSecond = Math.max(
+          nodeExisting.maxDownloadPerSecond,
+          item.downloadPerSecond,
+        );
+        if (item.lastSeen > nodeExisting.lastSeen) {
+          nodeExisting.lastSeen = item.lastSeen;
+        }
+      } else {
+        nodePeakMap.set(item.node, {
+          node: item.node,
+          maxUploadPerSecond: item.uploadPerSecond,
+          maxDownloadPerSecond: item.downloadPerSecond,
+          lastSeen: item.lastSeen,
+        });
+      }
+    }
+
+    return { minuteNodeMap, nodePeakMap };
+  }
+
   add(backendId: number, update: TrafficUpdate) {
+    this.recordNodeRate(update);
     const minuteKey = toMinuteKey(update.timestampMs);
     const fullChain = update.chains.join(" > ");
     const key = [
@@ -115,6 +282,7 @@ export class BatchBuffer {
 
   clear(): void {
     this.buffer.clear();
+    this.nodeSecondBuffer.clear();
     this.geoQueue = [];
   }
 
@@ -129,6 +297,7 @@ export class BatchBuffer {
       clickHouseWriter.isHealthy(),
     );
     const updates = Array.from(this.buffer.values());
+    const { minuteNodeMap, nodePeakMap } = this.buildNodePeakMaps();
     const geoResults = [...this.geoQueue];
 
     // Calculate unique domains and rules for logging
@@ -155,7 +324,10 @@ export class BatchBuffer {
       try {
         const reduceSQLiteWrites = clickHouseWriter.isHealthy() && process.env.CH_DISABLE_SQLITE_REDUCTION !== '1';
         if (!skipSqliteStatsWrites) {
-          db.batchUpdateTrafficStats(backendId, updates, reduceSQLiteWrites);
+          db.batchUpdateTrafficStats(backendId, updates, reduceSQLiteWrites, {
+            minuteNodeMap,
+            nodePeakMap,
+          });
         }
         if (clickHouseWriter.isEnabled()) {
           pendingTrafficWrite = clickHouseWriter.writeTrafficBatch(
@@ -171,6 +343,7 @@ export class BatchBuffer {
 
     if (trafficOk) {
       this.buffer.clear();
+      this.nodeSecondBuffer.clear();
     }
 
     if (geoResults.length > 0) {
