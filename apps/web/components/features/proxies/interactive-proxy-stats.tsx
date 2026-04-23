@@ -378,14 +378,14 @@ export function InteractiveProxyStats({
                           </div>
                           <span className="tabular-nums text-right min-[300px]:text-right">{percentage.toFixed(1)}%</span>
                         </div>
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground/90">
-                          <span className="whitespace-nowrap">
-                            <span className="text-blue-500 dark:text-blue-400">{statsT("peakDownload")}</span>{" "}
-                            <span className="tabular-nums">{formatRate(item.maxDownloadPerSecond)}</span>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px] text-muted-foreground/90">
+                          <span className="flex min-w-0 items-center justify-between gap-2 whitespace-nowrap">
+                            <span className="text-blue-500 dark:text-blue-400">{statsT("peakDownload")}</span>
+                            <span className="tabular-nums text-right">{formatRate(item.maxDownloadPerSecond)}</span>
                           </span>
-                          <span className="whitespace-nowrap">
-                            <span className="text-purple-500 dark:text-purple-400">{statsT("peakUpload")}</span>{" "}
-                            <span className="tabular-nums">{formatRate(item.maxUploadPerSecond)}</span>
+                          <span className="flex min-w-0 items-center justify-between gap-2 whitespace-nowrap">
+                            <span className="text-purple-500 dark:text-purple-400">{statsT("peakUpload")}</span>
+                            <span className="tabular-nums text-right">{formatRate(item.maxUploadPerSecond)}</span>
                           </span>
                         </div>
                       </div>
