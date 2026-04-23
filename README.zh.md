@@ -201,10 +201,10 @@ docker run -d \
 
 ```bash
 # 使用 curl
-curl -fsSL https://raw.githubusercontent.com/foru17/neko-master/main/setup.sh | bash
+curl -fsSL https://raw.githubusercontent.com/QuentinHsu/neko-master/main/setup.sh | bash
 
 # 或使用 wget
-wget -qO- https://raw.githubusercontent.com/foru17/neko-master/main/setup.sh | bash
+wget -qO- https://raw.githubusercontent.com/QuentinHsu/neko-master/main/setup.sh | bash
 ```
 
 脚本会自动：
@@ -218,7 +218,7 @@ wget -qO- https://raw.githubusercontent.com/foru17/neko-master/main/setup.sh | b
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/foru17/neko-master.git
+git clone https://github.com/QuentinHsu/neko-master.git
 cd neko-master
 
 # 2. 安装依赖
@@ -250,7 +250,7 @@ pnpm dev
 
 ```bash
 # Clash / Mihomo 网关示例
-curl -fsSL https://raw.githubusercontent.com/foru17/neko-master/main/apps/agent/install.sh \
+curl -fsSL https://raw.githubusercontent.com/QuentinHsu/neko-master/main/apps/agent/install.sh \
   | env NEKO_SERVER='http://your-panel:3000' \
         NEKO_BACKEND_ID='1' \
         NEKO_BACKEND_TOKEN='ag_xxx' \
@@ -259,7 +259,7 @@ curl -fsSL https://raw.githubusercontent.com/foru17/neko-master/main/apps/agent/
         sh
 
 # Surge 网关示例
-curl -fsSL https://raw.githubusercontent.com/foru17/neko-master/main/apps/agent/install.sh \
+curl -fsSL https://raw.githubusercontent.com/QuentinHsu/neko-master/main/apps/agent/install.sh \
   | env NEKO_SERVER='http://your-panel:3000' \
         NEKO_BACKEND_ID='2' \
         NEKO_BACKEND_TOKEN='ag_yyy' \
@@ -383,7 +383,7 @@ ports:
 ### 方案 3：使用一键脚本
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/foru17/neko-master/main/setup.sh | bash
+curl -fsSL https://raw.githubusercontent.com/QuentinHsu/neko-master/main/setup.sh | bash
 ```
 
 脚本会自动检测并提供可用的端口。
@@ -983,7 +983,7 @@ MIT License © 2024 [foru17](https://github.com/foru17)
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=foru17/neko-master&type=date&legend=top-left)](https://www.star-history.com/#foru17/neko-master&type=date&legend=top-left)
+[![Star History Chart](https://api.star-history.com/svg?repos=QuentinHsu/neko-master&type=date&legend=top-left)](https://www.star-history.com/#QuentinHsu/neko-master&type=date&legend=top-left)
 
 ---
 

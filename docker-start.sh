@@ -122,7 +122,7 @@ cleanup() {
     exit 0
 }
 
-trap cleanup SIGTERM SIGINT
+trap cleanup TERM INT
 
 # Monitor child processes - exit if either one dies
 while true; do
