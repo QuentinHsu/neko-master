@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { MetricSummaryRow } from "@/components/common/metric-summary-row";
+import { Link2 } from "lucide-react";
 import { CountryFlag } from "./country-flag";
 import { formatBytes, formatNumber } from "@/lib/utils";
 import { useCountryName } from "@/lib/i18n-country";
@@ -100,13 +100,27 @@ export function CountryTrafficList({
                 />
               </div>
 
-              {/* Metrics + Share */}
-              <MetricSummaryRow
-                download={formatBytes(country.totalDownload)}
-                upload={formatBytes(country.totalUpload)}
-                connections={formatNumber(country.totalConnections)}
-                share={`${percentage.toFixed(1)}%`}
-              />
+              {/* Compact per-card metrics: avoid fixed-width shared row causing overflow in 6-col layout */}
+              <div className="space-y-1 text-xs">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="min-w-0 truncate text-blue-500 dark:text-blue-400 tabular-nums">
+                    ↓ {formatBytes(country.totalDownload)}
+                  </span>
+                  <span className="min-w-0 truncate text-right text-purple-500 dark:text-purple-400 tabular-nums">
+                    ↑ {formatBytes(country.totalUpload)}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-2 text-muted-foreground">
+                  <span className="inline-flex min-w-0 items-center gap-1 tabular-nums">
+                    <Link2 className="w-3 h-3 shrink-0" />
+                    <span className="truncate">{formatNumber(country.totalConnections)}</span>
+                  </span>
+                  <span className="tabular-nums whitespace-nowrap sm:hidden">
+                    {percentage.toFixed(1)}%
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         );

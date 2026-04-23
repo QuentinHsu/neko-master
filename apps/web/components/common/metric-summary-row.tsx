@@ -8,6 +8,7 @@ interface MetricSummaryRowProps {
   upload: string;
   connections: string;
   share?: string;
+  shareVisibility?: "always" | "mobile-only" | "desktop-only";
   className?: string;
 }
 
@@ -16,8 +17,16 @@ export function MetricSummaryRow({
   upload,
   connections,
   share,
+  shareVisibility = "always",
   className,
 }: MetricSummaryRowProps) {
+  const shareClassName =
+    shareVisibility === "mobile-only"
+      ? "sm:hidden"
+      : shareVisibility === "desktop-only"
+        ? "hidden sm:inline"
+        : "";
+
   return (
     <div
       className={cn(
@@ -36,7 +45,14 @@ export function MetricSummaryRow({
         <span>{connections}</span>
       </span>
       {share ? (
-        <span className="min-w-0 whitespace-nowrap text-right tabular-nums">{share}</span>
+        <span
+          className={cn(
+            "min-w-0 whitespace-nowrap text-right tabular-nums",
+            shareClassName,
+          )}
+        >
+          {share}
+        </span>
       ) : null}
     </div>
   );
