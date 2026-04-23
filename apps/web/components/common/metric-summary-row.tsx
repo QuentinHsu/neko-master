@@ -30,24 +30,26 @@ export function MetricSummaryRow({
   return (
     <div
       className={cn(
-        "grid w-full max-w-[20rem] grid-cols-[7rem_5.5rem_3rem_minmax(0,1fr)] items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground",
+        "grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 text-xs text-muted-foreground",
         className,
       )}
     >
-      <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-left text-blue-500 dark:text-blue-400 tabular-nums">
-        ↓ {download}
-      </span>
-      <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-left text-purple-500 dark:text-purple-400 tabular-nums">
-        ↑ {upload}
-      </span>
-      <span className="flex w-[3rem] items-center gap-1 whitespace-nowrap text-left tabular-nums">
-        <Link2 className="w-3 h-3 shrink-0" />
-        <span>{connections}</span>
-      </span>
+      <div className="grid min-w-0 grid-cols-[minmax(0,7rem)_minmax(0,5.5rem)_auto] items-center gap-x-3 overflow-hidden">
+        <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-left text-blue-500 dark:text-blue-400 tabular-nums">
+          ↓ {download}
+        </span>
+        <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-left text-purple-500 dark:text-purple-400 tabular-nums">
+          ↑ {upload}
+        </span>
+        <span className="flex items-center gap-1 whitespace-nowrap text-left tabular-nums">
+          <Link2 className="w-3 h-3 shrink-0" />
+          <span>{connections}</span>
+        </span>
+      </div>
       {share ? (
         <span
           className={cn(
-            "min-w-0 whitespace-nowrap text-right tabular-nums",
+            "shrink-0 whitespace-nowrap text-right tabular-nums",
             shareClassName,
           )}
         >

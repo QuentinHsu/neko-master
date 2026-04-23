@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useTranslations } from "next-intl";
-import { ProxyNodeList } from "@/components/features/proxies/proxy-node-list";
+import { ProxyNodeList } from "@/components/features/proxies";
 import type { ProxyStats } from "@neko-master/shared";
 
 interface TopProxiesSimpleProps {

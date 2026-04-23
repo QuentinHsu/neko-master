@@ -243,6 +243,8 @@
   "devices": {
     "title": "Devices",
     "distribution": "Device Traffic Distribution",
+    "sortByTraffic": "Sort by traffic",
+    "sortByConnections": "Sort by connections",
     "noData": "No device data available",
     "noDataHint": "Device traffic details will appear after collection starts.",
     "connections": "connections",
@@ -255,6 +257,8 @@
     "distribution": "Rule Match Traffic Distribution",
     "ruleList": "Rule Match List",
     "topDomains": "Top Domains",
+    "sortByTraffic": "Sort by traffic",
+    "sortByConnections": "Sort by connections",
     "description": "Traffic grouped by matched rules and their final exits.",
     "connections": "conn",
     "noData": "No data",

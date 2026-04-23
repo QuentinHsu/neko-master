@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { BarChart3, Link2, Smartphone } from "lucide-react";
+import { BarChart3, Smartphone } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -17,12 +17,13 @@ import {
   Cell as BarCell,
   LabelList,
 } from "recharts";
-import { MetricSummaryRow } from "@/components/common/metric-summary-row";
+import {
+  TrafficRankingList,
+  type TrafficRankingItem,
+} from "@/components/common";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { formatBytes, formatNumber } from "@/lib/utils";
-import { cn } from "@/lib/utils";
+import { cn, formatBytes, formatNumber } from "@/lib/utils";
 import { type TimeRange } from "@/lib/api";
 import {
   getDeviceDomainsQueryKey,
@@ -40,8 +41,6 @@ import { COLORS, type PageSize } from "@/lib/stats-utils";
 import { useDeviceDomains, useDeviceIPs } from "@/hooks/api/use-devices";
 import type {
   DeviceStats,
-  DomainStats,
-  IPStats,
   StatsSummary,
 } from "@neko-master/shared";
 
@@ -54,7 +53,15 @@ interface InteractiveDeviceStatsProps {
 }
 const DEVICE_DETAIL_WS_MIN_PUSH_MS = 3_000;
 
-function renderCustomBarLabel(props: any) {
+interface CustomBarLabelProps {
+  x?: number;
+  y?: number;
+  width?: number;
+  value?: number;
+  height?: number;
+}
+
+function renderCustomBarLabel(props: CustomBarLabelProps) {
   const { x, y, width, value, height } = props;
   return (
     <text
@@ -84,6 +91,7 @@ export function InteractiveDeviceStats({
   const queryClient = useQueryClient();
 
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<"traffic" | "connections">("traffic");
   const [activeTab, setActiveTab] = useState("domains");
   const [detailPageSize, setDetailPageSize] = useState<PageSize>(10);
   const [showDomainBarLabels, setShowDomainBarLabels] = useState(true);
@@ -110,31 +118,45 @@ export function InteractiveDeviceStats({
     }));
   }, [data]);
 
-  const totalTraffic = useMemo(
-    () => chartData.reduce((sum, item) => sum + item.value, 0),
-    [chartData],
-  );
   const topDevices = useMemo(
     () => [...chartData].sort((a, b) => b.value - a.value).slice(0, 4),
     [chartData],
   );
-  const maxTotal = useMemo(
-    () => (chartData.length ? Math.max(...chartData.map((d) => d.value)) : 1),
-    [chartData],
+
+  const sortedDeviceData = useMemo(() => {
+    return [...chartData].sort((left, right) => {
+      if (sortBy === "connections") {
+        return right.connections - left.connections;
+      }
+      return right.value - left.value;
+    });
+  }, [chartData, sortBy]);
+
+  const rankingItems = useMemo<TrafficRankingItem[]>(
+    () =>
+      sortedDeviceData.map((item) => ({
+        id: item.rawName,
+        name: item.name,
+        totalDownload: item.download,
+        totalUpload: item.upload,
+        totalConnections: item.connections,
+        icon: <Smartphone className="h-3 w-3 text-muted-foreground" />,
+      })),
+    [sortedDeviceData],
   );
 
   useEffect(() => {
-    if (chartData.length === 0) {
+    if (sortedDeviceData.length === 0) {
       setSelectedDevice(null);
       return;
     }
     const exists =
       !!selectedDevice &&
-      chartData.some((item) => item.rawName === selectedDevice);
+      sortedDeviceData.some((item) => item.rawName === selectedDevice);
     if (!exists) {
-      setSelectedDevice(chartData[0].rawName);
+      setSelectedDevice(sortedDeviceData[0].rawName);
     }
-  }, [chartData, selectedDevice]);
+  }, [selectedDevice, sortedDeviceData]);
 
   const wsDetailEnabled = autoRefresh && !!activeBackendId && !!selectedDevice;
   const { status: wsDetailStatus } = useStatsWebSocket({
@@ -346,81 +368,21 @@ export function InteractiveDeviceStats({
 
         {/* Device List */}
         <Card className="min-w-0 md:col-span-1 xl:col-span-4">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-              {t("title")}
-            </CardTitle>
-          </CardHeader>
           <CardContent className="p-3">
-            <ScrollArea className="h-[280px] pr-3">
-              <div className="space-y-2">
-                {chartData.map((item) => {
-                  const percentage =
-                    totalTraffic > 0 ? (item.value / totalTraffic) * 100 : 0;
-                  const barPercent = (item.value / maxTotal) * 100;
-                  const isSelected = selectedDevice === item.rawName;
-                  const badgeColor =
-                    item.rank === 0
-                      ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                      : item.rank === 1
-                        ? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                        : item.rank === 2
-                          ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
-                          : "bg-muted text-muted-foreground";
-                  return (
-                    <button
-                      key={item.rawName}
-                      onClick={() => handleDeviceClick(item.rawName)}
-                      className={cn(
-                        "w-full p-2.5 rounded-xl border text-left transition-all duration-200 overflow-hidden",
-                        isSelected
-                          ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                          : "border-border/50 bg-card/50 hover:bg-card hover:border-primary/30",
-                      )}>
-                      <div className="flex items-center gap-2 mb-1.5 min-w-0">
-                        <span
-                          className={cn(
-                            "w-5 h-5 rounded-md text-[10px] font-bold flex items-center justify-center shrink-0",
-                            badgeColor,
-                          )}>
-                          {item.rank + 1}
-                        </span>
-                        <span
-                          className="flex-1 text-sm font-medium truncate min-w-0"
-                          title={item.name}>
-                          {item.name}
-                        </span>
-                        <span className="text-sm font-bold tabular-nums shrink-0 whitespace-nowrap ml-auto">
-                          {formatBytes(item.value)}
-                        </span>
-                      </div>
-                      <div className="pl-7 space-y-1">
-                        <div className="h-1.5 rounded-full bg-muted overflow-hidden flex">
-                          <div
-                            className="h-full bg-blue-500 dark:bg-blue-400"
-                            style={{
-                              width: `${item.value > 0 ? (item.download / item.value) * barPercent : 0}%`,
-                            }}
-                          />
-                          <div
-                            className="h-full bg-purple-500 dark:bg-purple-400"
-                            style={{
-                              width: `${item.value > 0 ? (item.upload / item.value) * barPercent : 0}%`,
-                            }}
-                          />
-                        </div>
-                        <MetricSummaryRow
-                          download={formatBytes(item.download)}
-                          upload={formatBytes(item.upload)}
-                          connections={formatNumber(item.connections)}
-                          share={`${percentage.toFixed(1)}%`}
-                        />
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </ScrollArea>
+            <TrafficRankingList
+              title={t("title")}
+              icon={<Smartphone className="w-4 h-4" />}
+              items={rankingItems}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+              onSelect={handleDeviceClick}
+              selectedId={selectedDevice}
+              scrollHeightClassName="h-[280px]"
+              sortTrafficLabel={t("sortByTraffic")}
+              sortConnectionsLabel={t("sortByConnections")}
+              emptyTitle={t("noData")}
+              emptyHint={emptyHint}
+            />
           </CardContent>
         </Card>
 

@@ -243,6 +243,8 @@
   "devices": {
     "title": "设备",
     "distribution": "设备流量分布",
+    "sortByTraffic": "按流量排序",
+    "sortByConnections": "按连接数排序",
     "noData": "暂无设备数据",
     "noDataHint": "开始采集后，这里会显示设备流量明细。",
     "connections": "连接",
@@ -255,6 +257,8 @@
     "distribution": "规则命中流量分布",
     "ruleList": "规则命中列表",
     "topDomains": "热门域名",
+    "sortByTraffic": "按流量排序",
+    "sortByConnections": "按连接数排序",
     "description": "按匹配规则统计命中流量与最终出口。",
     "connections": "连接",
     "noData": "暂无数据",

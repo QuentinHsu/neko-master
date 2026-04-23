@@ -1,15 +1,17 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { BarChart3, Link2, Waypoints } from "lucide-react";
+import { BarChart3, Waypoints } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell as BarCell, LabelList } from "recharts";
-import { MetricSummaryRow } from "@/components/common/metric-summary-row";
+import {
+  TrafficRankingList,
+  type TrafficRankingItem,
+} from "@/components/common";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatBytes, formatNumber } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { type TimeRange } from "@/lib/api";
@@ -60,8 +62,6 @@ interface RuleChartItem {
   connections: number;
   finalProxy?: string;
   color: string;
-  rank: number;
-  hasTraffic: boolean;
 }
 
 interface RuleDomainChartItem {
@@ -79,7 +79,15 @@ function normalizeRuleName(name: string): string {
 }
 
 // Custom label renderer for bar chart
-function renderCustomBarLabel(props: any) {
+interface CustomBarLabelProps {
+  x?: number;
+  y?: number;
+  width?: number;
+  value?: number;
+  height?: number;
+}
+
+function renderCustomBarLabel(props: CustomBarLabelProps) {
   const { x, y, width, value, height } = props;
   return (
     <text
@@ -144,6 +152,7 @@ export function InteractiveRuleStats({
   const listLoading = !data && listQueryLoading && !listData;
   
   const [selectedRule, setSelectedRule] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<"traffic" | "connections">("traffic");
   const [activeTab, setActiveTab] = useState("domains");
   const [detailPageSize, setDetailPageSize] = useState<PageSize>(10);
   const [showDomainBarLabels, setShowDomainBarLabels] = useState(true);
@@ -172,24 +181,34 @@ export function InteractiveRuleStats({
       connections: rule.totalConnections,
       finalProxy: rule.finalProxy,
       color: COLORS[index % COLORS.length],
-      rank: index,
-      hasTraffic: true,
     }));
   }, [rulesData]);
-
-  const totalTraffic = useMemo(() => {
-    return chartData.reduce((sum, item) => sum + item.value, 0);
-  }, [chartData]);
 
   const topRules = useMemo(
     () => [...chartData].sort((a, b) => b.value - a.value).slice(0, 4),
     [chartData]
   );
 
-  const maxTotal = useMemo(() => {
-    if (!chartData.length) return 1;
-    return Math.max(...chartData.map(r => r.value));
-  }, [chartData]);
+  const sortedRules = useMemo(() => {
+    return [...chartData].sort((left, right) => {
+      if (sortBy === "connections") {
+        return right.connections - left.connections;
+      }
+      return right.value - left.value;
+    });
+  }, [chartData, sortBy]);
+
+  const rankingItems = useMemo<TrafficRankingItem[]>(() => {
+    return sortedRules.map((item) => ({
+      id: item.rawName,
+      name: item.name,
+      totalDownload: item.download,
+      totalUpload: item.upload,
+      totalConnections: item.connections,
+      icon: <Waypoints className="h-3 w-3 text-muted-foreground" />,
+      titleClassName: cn(isWindows && "emoji-flag-font"),
+    }));
+  }, [isWindows, sortedRules]);
 
   // Compute set of visible rule names for filtering the graph
   const visibleRuleNames = useMemo(() => {
@@ -244,15 +263,15 @@ export function InteractiveRuleStats({
 
   // Default select first rule when data loads
   useEffect(() => {
-    if (chartData.length === 0) {
+    if (sortedRules.length === 0) {
       setSelectedRule(null);
       return;
     }
-    const exists = !!selectedRule && chartData.some((item) => item.rawName === selectedRule);
+    const exists = !!selectedRule && sortedRules.some((item) => item.rawName === selectedRule);
     if (!exists) {
-      setSelectedRule(chartData[0].rawName);
+      setSelectedRule(sortedRules[0].rawName);
     }
-  }, [chartData, selectedRule]);
+  }, [selectedRule, sortedRules]);
 
   const handleRuleClick = useCallback((rule: string) => {
     if (selectedRule !== rule) {
@@ -406,157 +425,21 @@ export function InteractiveRuleStats({
 
         {/* Middle: Rule List */}
         <Card className="min-w-0 md:col-span-1 xl:col-span-4">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-              {t("ruleList")}
-            </CardTitle>
-          </CardHeader>
           <CardContent className="p-3">
-            <ScrollArea className="h-[280px] pr-3">
-              <div className="space-y-2">
-                {chartData.map((item) => {
-                const percentage = totalTraffic > 0 ? (item.value / totalTraffic) * 100 : 0;
-                const barPercent = maxTotal > 0 ? (item.value / maxTotal) * 100 : 0;
-                const isSelected = selectedRule === item.rawName;
-                const noTraffic = !item.hasTraffic;
-
-                // Badge color based on rank
-                const badgeColor = noTraffic
-                  ? "bg-muted text-muted-foreground"
-                  : item.rank === 0
-                  ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                  : item.rank === 1
-                  ? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                  : item.rank === 2
-                  ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
-                  : "bg-muted text-muted-foreground";
-
-                return (
-                  <button
-                    key={item.rawName}
-                    onClick={() => !noTraffic && handleRuleClick(item.rawName)}
-                    className={cn(
-                      "w-full p-2.5 rounded-xl border text-left transition-all duration-200 overflow-hidden @container",
-                      noTraffic
-                        ? "border-border/30 bg-card/30 opacity-50 cursor-default"
-                        : isSelected
-                        ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                        : "border-border/50 bg-card/50 hover:bg-card hover:border-primary/30"
-                    )}>
-                    {/* Layout for wide container (default) */}
-                    <div className="hidden @min-[200px]:block">
-                      {/* Row 1: Rank + Name + Total */}
-                      <div className="flex items-center gap-2 mb-1.5 min-w-0">
-                        <span className={cn(
-                          "w-5 h-5 rounded-md text-[10px] font-bold flex items-center justify-center shrink-0",
-                          badgeColor
-                        )}>
-                          {noTraffic ? "–" : item.rank + 1}
-                        </span>
-
-                        <span 
-                          className={cn("flex-1 text-sm font-medium truncate min-w-0", isWindows && "emoji-flag-font")} 
-                          title={item.name}
-                        >
-                          {item.name}
-                        </span>
-
-                        <span className="text-sm font-bold tabular-nums shrink-0 whitespace-nowrap ml-auto">
-                          {noTraffic ? (
-                            <span className="text-xs font-normal text-muted-foreground">{t("noTrafficRecord")}</span>
-                          ) : formatBytes(item.value)}
-                        </span>
-                      </div>
-
-                      {/* Row 2: Progress bar + Stats (hidden for zero-traffic) */}
-                      {!noTraffic && (
-                      <div className="pl-7 space-y-1">
-                        {/* Progress bar - dual color */}
-                        <div className="h-1.5 rounded-full bg-muted overflow-hidden flex">
-                          <div
-                            className="h-full bg-blue-500 dark:bg-blue-400"
-                            style={{ width: `${item.value > 0 ? (item.download / item.value) * barPercent : 0}%` }}
-                          />
-                          <div
-                            className="h-full bg-purple-500 dark:bg-purple-400"
-                            style={{ width: `${item.value > 0 ? (item.upload / item.value) * barPercent : 0}%` }}
-                          />
-                        </div>
-                        {/* Stats */}
-                        <MetricSummaryRow
-                          download={formatBytes(item.download)}
-                          upload={formatBytes(item.upload)}
-                          connections={formatNumber(item.connections)}
-                          share={`${percentage.toFixed(1)}%`}
-                        />
-                      </div>
-                      )}
-                    </div>
-
-                    {/* Layout for narrow container (vertical stack) */}
-                    <div className="block @min-[200px]:hidden space-y-2">
-                      {/* Row 1: Rank + Name */}
-                      <div className="flex items-center gap-2">
-                        <span className={cn(
-                          "w-5 h-5 rounded-md text-[10px] font-bold flex items-center justify-center shrink-0",
-                          badgeColor
-                        )}>
-                          {noTraffic ? "–" : item.rank + 1}
-                        </span>
-                        <span className={cn("flex-1 text-sm font-medium line-clamp-2 leading-tight", isWindows && "emoji-flag-font")} title={item.name}>
-                          {item.name}
-                        </span>
-                      </div>
-                      
-                      {/* Row 2: Stats Grid (hidden for zero-traffic) */}
-                      {!noTraffic && (
-                      <div className="pl-7 space-y-2">
-                        {/* Total Traffic */}
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">{t("total")}</span>
-                          <span className="text-sm font-bold tabular-nums">{formatBytes(item.value)}</span>
-                        </div>
-                        
-                        {/* Progress bar */}
-                        <div className="h-1.5 rounded-full bg-muted overflow-hidden flex">
-                          <div
-                            className="h-full bg-blue-500 dark:bg-blue-400"
-                            style={{ width: `${item.value > 0 ? (item.download / item.value) * 100 : 0}%` }}
-                          />
-                          <div
-                            className="h-full bg-purple-500 dark:bg-purple-400"
-                            style={{ width: `${item.value > 0 ? (item.upload / item.value) * 100 : 0}%` }}
-                          />
-                        </div>
-                        
-                        {/* Download / Upload / Connections */}
-                        <div className="grid grid-cols-3 gap-1 text-xs">
-                          <div className="text-center p-1 rounded bg-blue-50 dark:bg-blue-950/30">
-                            <div className="text-blue-500 dark:text-blue-400 mb-0.5">↓</div>
-                            <div className="font-medium tabular-nums truncate">{formatBytes(item.download)}</div>
-                          </div>
-                          <div className="text-center p-1 rounded bg-purple-50 dark:bg-purple-950/30">
-                            <div className="text-purple-500 dark:text-purple-400 mb-0.5">↑</div>
-                            <div className="font-medium tabular-nums truncate">{formatBytes(item.upload)}</div>
-                          </div>
-                          <div className="text-center p-1 rounded bg-muted/50">
-                            <div className="text-muted-foreground mb-0.5"><Link2 className="w-3 h-3 mx-auto" /></div>
-                            <div className="font-medium tabular-nums">{formatNumber(item.connections)}</div>
-                          </div>
-                        </div>
-                      </div>
-                      )}
-                      
-                      {/* Zero traffic message */}
-                      {noTraffic && (
-                        <div className="pl-7 text-xs text-muted-foreground">{t("noTrafficRecord")}</div>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-              </div>
-            </ScrollArea>
+            <TrafficRankingList
+              title={t("ruleList")}
+              icon={<Waypoints className="w-4 h-4" />}
+              items={rankingItems}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+              onSelect={handleRuleClick}
+              selectedId={selectedRule}
+              scrollHeightClassName="h-[280px]"
+              sortTrafficLabel={t("sortByTraffic")}
+              sortConnectionsLabel={t("sortByConnections")}
+              emptyTitle={t("noData")}
+              emptyHint={emptyHint}
+            />
           </CardContent>
         </Card>
 
