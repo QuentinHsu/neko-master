@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CountryFlag, extractCountryCodeFromText, stripLeadingFlagEmoji } from "@/components/features/countries/country-flag";
-import { formatBytes, formatNumber } from "@/lib/utils";
+import { formatBytes, formatNumber, formatRateBytes } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { useIsWindows } from "@/lib/hooks/use-is-windows";
 import { type TimeRange } from "@/lib/api";
@@ -70,7 +70,7 @@ function renderCustomBarLabel(props: any) {
 }
 
 function formatRate(bytesPerSecond?: number): string {
-  return `${formatBytes(bytesPerSecond ?? 0, 0)}/s`;
+  return formatRateBytes(bytesPerSecond ?? 0);
 }
 
 // Hook to detect container width for responsive chart items

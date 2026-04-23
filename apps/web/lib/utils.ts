@@ -24,6 +24,25 @@ export function formatBytes(bytes: number, decimals = 2): string {
   return `${parseFloat(safeScaled.toFixed(dm))} ${unit}`;
 }
 
+export function formatRateBytes(bytesPerSecond: number): string {
+  const normalizedRate = Number(bytesPerSecond);
+  if (!Number.isFinite(normalizedRate) || normalizedRate === 0) return "0 B/s";
+  if (normalizedRate < 0) return `-${formatRateBytes(-normalizedRate)}`;
+
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB", "TB", "PB"];
+  const exponent = Math.log(normalizedRate) / Math.log(k);
+  const rawIndex = Number.isFinite(exponent) ? Math.floor(exponent) : 0;
+  const i = rawIndex < 0 ? 0 : Math.min(rawIndex, sizes.length - 1);
+  const unit = sizes[i] ?? "B";
+  const scaled = normalizedRate / Math.pow(k, i);
+  const safeScaled = Number.isFinite(scaled) ? scaled : 0;
+  const decimals = unit === "KB" ? 0 : i >= 2 ? 2 : 0;
+  const value = decimals === 0 ? Math.round(safeScaled).toString() : safeScaled.toFixed(decimals);
+
+  return `${value} ${unit}/s`;
+}
+
 export function formatNumber(num: number): string {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
   if (num >= 1000) return (num / 1000).toFixed(1) + "K";
