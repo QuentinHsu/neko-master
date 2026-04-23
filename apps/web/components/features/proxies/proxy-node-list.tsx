@@ -143,20 +143,22 @@ export const ProxyNodeList = memo(function ProxyNodeList({
                   }}
                 />
               </div>
-              <div className="grid grid-cols-1 min-[300px]:grid-cols-[1fr_auto] gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                  <span className="text-blue-500 dark:text-blue-400 whitespace-nowrap">
-                    ↓ {formatBytes(proxy.totalDownload)}
-                  </span>
-                  <span className="text-purple-500 dark:text-purple-400 whitespace-nowrap">
-                    ↑ {formatBytes(proxy.totalUpload)}
-                  </span>
-                  <span className="flex items-center gap-1 tabular-nums">
-                    <Link2 className="w-3 h-3" />
+              <div className="grid w-full grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_auto] items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+                <span className="min-w-0 text-blue-500 dark:text-blue-400 whitespace-nowrap overflow-hidden text-ellipsis tabular-nums">
+                  ↓ {formatBytes(proxy.totalDownload)}
+                </span>
+                <span className="min-w-0 text-purple-500 dark:text-purple-400 whitespace-nowrap overflow-hidden text-ellipsis tabular-nums">
+                  ↑ {formatBytes(proxy.totalUpload)}
+                </span>
+                <span className="min-w-0 flex items-center gap-1 whitespace-nowrap overflow-hidden text-ellipsis tabular-nums">
+                  <Link2 className="w-3 h-3 shrink-0" />
+                  <span className="min-w-0 overflow-hidden text-ellipsis">
                     {formatNumber(proxy.totalConnections)}
                   </span>
-                </div>
-                <span className="tabular-nums text-right">{percentage.toFixed(1)}%</span>
+                </span>
+                <span className="tabular-nums text-right whitespace-nowrap">
+                  {percentage.toFixed(1)}%
+                </span>
               </div>
               {showPeakRates && (
                 <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px] text-muted-foreground/90">
