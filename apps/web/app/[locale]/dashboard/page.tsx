@@ -2,7 +2,7 @@
 
 import { BackendConfigDialog } from "@/components/features/backend";
 import { AboutDialog } from "@/components/common";
-import { useDashboard, type TabId } from "./hooks/use-dashboard";
+import { useDashboard } from "./hooks/use-dashboard";
 import { Header } from "./components/header";
 import { Sidebar } from "./components/sidebar";
 import { Content } from "./components/content";
@@ -61,7 +61,7 @@ export default function DashboardPage() {
     <div className="flex min-h-screen bg-background">
       <Sidebar
         activeTab={activeTab}
-        onTabChange={(tab) => setActiveTab(tab as TabId)}
+        onTabChange={setActiveTab}
         onBackendChange={handleBackendChange}
         backendStatus={backendStatus}
       />
@@ -107,7 +107,7 @@ export default function DashboardPage() {
             autoRefresh={autoRefresh}
             activeBackendId={activeBackendId}
             backendStatus={backendStatus}
-            onNavigate={(tab) => setActiveTab(tab as TabId)}
+            onNavigate={setActiveTab}
           />
         </div>
       </main>

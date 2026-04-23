@@ -10,6 +10,11 @@ import {
 } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { api, getPresetTimeRange, type TimeRange } from "@/lib/api";
+import {
+  DEFAULT_DASHBOARD_TAB,
+  getDashboardPath,
+  getDashboardTabFromPath,
+} from "@/lib/dashboard-routes";
 import type {
   BackendStatus,
   TabId,
@@ -107,7 +112,6 @@ export function useDashboard(): UseDashboardReturn {
   }, [pathname]);
 
   // UI State
-  const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [timeRange, setTimeRange] = useState<TimeRange>(getPresetTimeRange("24h"));
   const [timePreset, setTimePreset] = useState<TimePreset>("24h");
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
@@ -116,6 +120,10 @@ export function useDashboard(): UseDashboardReturn {
   const [showBackendDialog, setShowBackendDialog] = useState(false);
   const [isFirstTime, setIsFirstTime] = useState(false);
   const [showAboutDialog, setShowAboutDialog] = useState(false);
+  const activeTab = useMemo(
+    () => getDashboardTabFromPath(pathname) ?? DEFAULT_DASHBOARD_TAB,
+    [pathname]
+  );
 
   const stableTimeRange = useStableTimeRange(timeRange, {
     roundToMinute: isRollingTimePreset(timePreset),
@@ -385,7 +393,21 @@ export function useDashboard(): UseDashboardReturn {
     await refreshNow(true);
   }, [backendsQuery.refetch, refreshNow]);
 
+  const setActiveTab = useCallback(
+    (tab: TabId) => {
+      if (tab === activeTab) return;
+      router.push(getDashboardPath(locale, tab));
+    },
+    [activeTab, locale, router]
+  );
+
   // Effects
+
+  useEffect(() => {
+    if (getDashboardTabFromPath(pathname)) return;
+    if (!pathname.startsWith(`/${locale}/dashboard`)) return;
+    router.replace(getDashboardPath(locale, DEFAULT_DASHBOARD_TAB));
+  }, [locale, pathname, router]);
 
   // Open setup dialog automatically when no backend is configured
   useEffect(() => {

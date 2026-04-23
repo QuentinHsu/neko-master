@@ -42,7 +42,7 @@ interface ContentProps {
   autoRefresh: boolean;
   activeBackendId?: number;
   backendStatus: BackendStatus;
-  onNavigate?: (tab: string) => void;
+  onNavigate?: (tab: TabId) => void;
   isLoading?: boolean;
   isTransitioning?: boolean;
 }
@@ -67,7 +67,7 @@ const OverviewContent = memo(function OverviewContent({
   timePreset: TimePreset;
   autoRefresh: boolean;
   activeBackendId?: number;
-  onNavigate?: (tab: string) => void;
+  onNavigate?: (tab: TabId) => void;
   backendStatus: BackendStatus;
   isLoading?: boolean;
 }) {

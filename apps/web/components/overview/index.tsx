@@ -11,7 +11,7 @@ import { useStatsWebSocket } from "@/lib/websocket";
 import { useTrafficTrend } from "@/hooks/api/use-traffic-trend";
 import { type TimeRange } from "@/lib/api";
 import { getTrafficTrendQueryKey } from "@/lib/stats-query-keys";
-import type { TimePreset } from "@/lib/types/dashboard";
+import type { TabId, TimePreset } from "@/lib/types/dashboard";
 import type {
   DomainStats,
   ProxyStats,
@@ -32,7 +32,7 @@ interface OverviewTabProps {
   timePreset: TimePreset;
   activeBackendId?: number;
   autoRefresh?: boolean;
-  onNavigate?: (tab: string) => void;
+  onNavigate?: (tab: TabId) => void;
   backendStatus?: "healthy" | "unhealthy" | "unknown";
   isLoading?: boolean;
 }

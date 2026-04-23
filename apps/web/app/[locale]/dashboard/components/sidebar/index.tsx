@@ -1,11 +1,11 @@
 "use client";
 
 import { Navigation } from "@/components/layout";
-import type { BackendStatus } from "@/lib/types/dashboard";
+import type { BackendStatus, TabId } from "@/lib/types/dashboard";
 
 interface SidebarProps {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
+  activeTab: TabId;
+  onTabChange: (tab: TabId) => void;
   onBackendChange: () => Promise<void>;
   backendStatus: BackendStatus;
 }

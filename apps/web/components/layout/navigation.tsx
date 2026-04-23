@@ -32,10 +32,11 @@ import {
 import { useVersionCheck } from "@/hooks/use-version-check";
 import { usePWAInstall } from "@/hooks/use-pwa-install";
 import { useAuthState } from "@/lib/auth-queries"; // Added
+import type { TabId } from "@/lib/types/dashboard";
 
 interface NavigationProps {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
+  activeTab: TabId;
+  onTabChange: (tab: TabId) => void;
   onBackendChange?: () => void;
   backendStatus?: "healthy" | "unhealthy" | "unknown";
 }
@@ -45,7 +46,7 @@ const GITHUB_REPO =
   process.env.NEXT_PUBLIC_GITHUB_REPO || "foru17/neko-master";
 const GITHUB_URL = `https://github.com/${GITHUB_REPO}`;
 
-const NAV_ITEMS = [
+const NAV_ITEMS: ReadonlyArray<{ id: TabId; icon: typeof LayoutDashboard }> = [
   { id: "overview", icon: LayoutDashboard },
   { id: "rules", icon: Route },
   { id: "domains", icon: Globe },

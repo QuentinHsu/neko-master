@@ -24,6 +24,11 @@ import {
   isLocale,
   type AppLocale,
 } from "@/i18n/routing";
+import {
+  DEFAULT_DASHBOARD_TAB,
+  getDashboardPath,
+  isDashboardTab,
+} from "@/lib/dashboard-routes";
 
 function getInitialLocale(): AppLocale {
   if (typeof navigator === "undefined") {
@@ -52,10 +57,14 @@ function LocaleApp({ locale }: { locale: AppLocale }) {
 }
 
 function LocaleRoute() {
-  const { locale } = useParams();
+  const { locale, tab } = useParams();
 
   if (!isLocale(locale)) {
-    return <Navigate to={`/${defaultLocale}/dashboard`} replace />;
+    return <Navigate to={getDashboardPath(defaultLocale, DEFAULT_DASHBOARD_TAB)} replace />;
+  }
+
+  if (tab !== undefined && !isDashboardTab(tab)) {
+    return <Navigate to={getDashboardPath(locale, DEFAULT_DASHBOARD_TAB)} replace />;
   }
 
   useEffect(() => {
@@ -72,16 +81,30 @@ function AppRouter() {
       <Routes>
         <Route
           path="/"
-          element={<Navigate to={`/${getInitialLocale()}/dashboard`} replace />}
+          element={
+            <Navigate
+              to={getDashboardPath(getInitialLocale(), DEFAULT_DASHBOARD_TAB)}
+              replace
+            />
+          }
         />
         <Route
           path="/:locale"
           element={<LocaleIndexRedirect />}
         />
-        <Route path="/:locale/dashboard" element={<LocaleRoute />} />
+        <Route
+          path="/:locale/dashboard"
+          element={<LocaleDashboardRedirect />}
+        />
+        <Route path="/:locale/dashboard/:tab" element={<LocaleRoute />} />
         <Route
           path="*"
-          element={<Navigate to={`/${defaultLocale}/dashboard`} replace />}
+          element={
+            <Navigate
+              to={getDashboardPath(defaultLocale, DEFAULT_DASHBOARD_TAB)}
+              replace
+            />
+          }
         />
       </Routes>
     </BrowserRouter>
@@ -93,7 +116,24 @@ function LocaleIndexRedirect() {
   return (
     <Navigate
       to={
-        isLocale(locale) ? `/${locale}/dashboard` : `/${defaultLocale}/dashboard`
+        isLocale(locale)
+          ? getDashboardPath(locale, DEFAULT_DASHBOARD_TAB)
+          : getDashboardPath(defaultLocale, DEFAULT_DASHBOARD_TAB)
+      }
+      replace
+    />
+  );
+}
+
+function LocaleDashboardRedirect() {
+  const { locale } = useParams();
+
+  return (
+    <Navigate
+      to={
+        isLocale(locale)
+          ? getDashboardPath(locale, DEFAULT_DASHBOARD_TAB)
+          : getDashboardPath(defaultLocale, DEFAULT_DASHBOARD_TAB)
       }
       replace
     />
