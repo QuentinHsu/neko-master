@@ -1,9 +1,12 @@
-# Clash Master - Multi-stage Docker Build
-FROM node:22-alpine AS base
+# Neko Master - Multi-stage Docker Build
+FROM node:22-bookworm-slim AS base
 
-# Install pnpm and build tools for native modules
-RUN apk add --no-cache python3 make g++ gcc && \
-    npm install -g pnpm@9.15.9
+# Install pnpm and build tools for native modules.
+# Debian-based Node images are more reliable than Alpine under QEMU arm64 builds.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends python3 make g++ gcc && \
+    npm install -g pnpm@9.15.9 && \
+    rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
@@ -36,10 +39,12 @@ RUN pnpm --filter @neko-master/collector deploy --prod /app/apps/collector-deplo
     cp -r /app/apps/collector/dist/* /app/apps/collector-deploy/dist/
 
 # Production stage
-FROM node:22-alpine AS production
+FROM node:22-bookworm-slim AS production
 
 # Install wget for health checks
-RUN apk add --no-cache wget
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends wget && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
