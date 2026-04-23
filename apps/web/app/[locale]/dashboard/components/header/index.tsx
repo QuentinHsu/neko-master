@@ -137,6 +137,7 @@ export function Header({
   const settingsT = useTranslations("settings");
   const themeT = useTranslations("theme");
   const aboutT = useTranslations("about");
+  const languageT = useTranslations("language");
 
   const [showProgress, setShowProgress] = React.useState(false);
 
@@ -529,7 +530,7 @@ export function Header({
                   }}
                   className={locale === "en" ? "bg-muted" : ""}
                 >
-                  English {locale === "en" && "✓"}
+                  {languageT("en")} {locale === "en" && "✓"}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
@@ -541,7 +542,7 @@ export function Header({
                   }}
                   className={locale === "zh" ? "bg-muted" : ""}
                 >
-                  中文 {locale === "zh" && "✓"}
+                  {languageT("zh")} {locale === "zh" && "✓"}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
 

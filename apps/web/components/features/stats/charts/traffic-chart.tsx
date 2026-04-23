@@ -10,21 +10,22 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type { HourlyStats } from "@neko-master/shared";
-import { formatBytes } from "@/lib/utils";
+import { formatBytes, getIntlLocale } from "@/lib/utils";
 
 interface TrafficChartProps {
   data: HourlyStats[];
 }
 
 export function TrafficChart({ data }: TrafficChartProps) {
+  const locale = getIntlLocale(useLocale());
   const t = useTranslations("chart");
 
   const chartData = useMemo(() => {
     if (!data) return [];
     return data.map((item) => ({
-      time: new Date(item.hour).toLocaleTimeString("en-US", {
+      time: new Date(item.hour).toLocaleTimeString(locale, {
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
@@ -32,7 +33,7 @@ export function TrafficChart({ data }: TrafficChartProps) {
       download: item.download,
       upload: item.upload,
     }));
-  }, [data]);
+  }, [data, locale]);
 
   return (
     <div className="h-[300px] w-full">
@@ -79,7 +80,7 @@ export function TrafficChart({ data }: TrafficChartProps) {
             }}
             formatter={(value: number, name: string) => [
               formatBytes(value),
-              name === "download" ? "Download" : "Upload",
+              name === "download" ? t("download") : t("upload"),
             ]}
             labelStyle={{ color: "hsl(var(--muted-foreground))", marginBottom: "4px" }}
           />

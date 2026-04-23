@@ -13,8 +13,8 @@ import {
 } from "recharts";
 import type { TooltipProps } from "recharts";
 import { Activity, Clock, Loader2 } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
+import { useLocale, useTranslations } from "next-intl";
+import { cn, getIntlLocale } from "@/lib/utils";
 import type { BackendHealthHistory, BackendHealthPoint } from "@/lib/api";
 
 type HealthStatus = "healthy" | "unhealthy" | "unknown";
@@ -50,16 +50,16 @@ function toMinuteKey(iso: string): string {
   return iso.slice(0, 16);
 }
 
-function formatLabel(cursor: Date, spanMs: number): string {
+function formatLabel(cursor: Date, spanMs: number, locale: string): string {
   if (spanMs <= 48 * 3_600_000) {
-    return cursor.toLocaleTimeString(undefined, {
+    return cursor.toLocaleTimeString(locale, {
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
     });
   }
   if (spanMs <= 7 * 86_400_000) {
-    return cursor.toLocaleString(undefined, {
+    return cursor.toLocaleString(locale, {
       month: "short",
       day: "numeric",
       hour: "2-digit",
@@ -67,7 +67,7 @@ function formatLabel(cursor: Date, spanMs: number): string {
       hour12: false,
     });
   }
-  return cursor.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return cursor.toLocaleDateString(locale, { month: "short", day: "numeric" });
 }
 
 interface Slot {
@@ -89,6 +89,7 @@ function buildSlots(
   to: Date,
   points: BackendHealthPoint[],
   bucketMinutes: number,
+  locale: string,
 ): Slot[] {
   const lookup = new Map<string, BackendHealthPoint>();
   for (const p of points) {
@@ -111,7 +112,7 @@ function buildSlots(
       tmp.setMinutes(tmp.getMinutes() + 1);
     }
 
-    const timeLabel = formatLabel(new Date(cursor), spanMs);
+    const timeLabel = formatLabel(new Date(cursor), spanMs, locale);
 
     if (bucketPoints.length === 0) {
       slots.push({
@@ -242,12 +243,13 @@ export function BackendHealthChart({
   to,
   bucketMinutes = 1,
 }: BackendHealthChartProps) {
+  const locale = getIntlLocale(useLocale());
   const t = useTranslations("health");
   const spanMs = to.getTime() - from.getTime();
 
   const slots = useMemo(
-    () => buildSlots(from, to, history.points, bucketMinutes),
-    [from, to, history.points, bucketMinutes],
+    () => buildSlots(from, to, history.points, bucketMinutes, locale),
+    [from, to, history.points, bucketMinutes, locale],
   );
 
   const refSpans = useMemo(() => buildRefSpans(resolveGapSlots(slots)), [slots]);
@@ -331,12 +333,12 @@ export function BackendHealthChart({
       );
       const tooltipTitle =
         spanMs > 7 * 86_400_000
-          ? slotDate.toLocaleDateString(undefined, {
+          ? slotDate.toLocaleDateString(locale, {
               year: "numeric",
               month: "short",
               day: "numeric",
             })
-          : slotDate.toLocaleString(undefined, {
+          : slotDate.toLocaleString(locale, {
               month: "short",
               day: "numeric",
               hour: "2-digit",

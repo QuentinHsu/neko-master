@@ -625,21 +625,21 @@ export function InteractiveRuleStats({
                                   {item.fullDomain}
                                 </span>
                               </div>
-                              <div className="space-y-2 text-xs">
+                                <div className="space-y-2 text-xs">
                                 <div className="flex justify-between items-center">
-                                  <span className="text-muted-foreground">Total Traffic</span>
+                                  <span className="text-muted-foreground">{t("total")}</span>
                                   <span className="font-semibold text-foreground">{formatBytes(item.total)}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                  <span className="text-blue-500">Download</span>
+                                  <span className="text-blue-500">{t("download")}</span>
                                   <span className="text-foreground">{formatBytes(item.download)}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                  <span className="text-purple-500">Upload</span>
+                                  <span className="text-purple-500">{t("upload")}</span>
                                   <span className="text-foreground">{formatBytes(item.upload)}</span>
                                 </div>
                                 <div className="flex justify-between items-center pt-1 border-t border-border/50">
-                                  <span className="text-emerald-500">Connections</span>
+                                  <span className="text-emerald-500">{t("connections")}</span>
                                   <span className="text-foreground">{formatNumber(item.connections)}</span>
                                 </div>
                               </div>

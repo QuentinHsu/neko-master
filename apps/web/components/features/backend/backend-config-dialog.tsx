@@ -1184,7 +1184,7 @@ export function BackendConfigDialog({
       await loadBackends();
       await onBackendChange?.();
     } catch (error: any) {
-      toast.error(error.message || "Test failed");
+      toast.error(error.message || t("testFailed"));
     } finally {
       setTestingId(null);
     }
@@ -1752,12 +1752,12 @@ export function BackendConfigDialog({
                                         backend.health.status === 'unhealthy' ? "text-red-500" : "text-gray-400"
                                       )}>
                                         {backend.health.message || 
-                                          (backend.health.status === 'healthy' ? 'Healthy' : 
-                                           backend.health.status === 'unhealthy' ? 'Unhealthy' : 'Unknown')}
+                                          (backend.health.status === 'healthy' ? t("healthy") : 
+                                           backend.health.status === 'unhealthy' ? t("unhealthy") : t("unknown"))}
                                         {backend.health.latency && ` (${backend.health.latency}ms)`}
                                       </span>
                                     ) : (
-                                      <span className="text-[10px] text-gray-400">Click to test connection</span>
+                                      <span className="text-[10px] text-gray-400">{t("clickToTestConnection")}</span>
                                     )}
                                   </div>
                                 </TooltipContent>

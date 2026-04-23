@@ -17,7 +17,9 @@
   },
   "header": {
     "title": "Neko Master",
-    "subtitle": "Modern traffic analytics for edge gateways"
+    "subtitle": "Modern traffic analytics for edge gateways",
+    "connected": "Connected",
+    "disconnected": "Disconnected"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -121,7 +123,6 @@
   },
   "topDomains": {
     "title": "Top Domains",
-    "topDomains": "Top Domains",
     "sortByTraffic": "Sort by traffic",
     "sortByConnections": "Sort by connections",
     "viewAll": "View all",
@@ -287,7 +288,10 @@
   },
   "pwa": {
     "installApp": "INSTALL",
-    "tooltip": "Install as a desktop app for faster access and a native experience"
+    "tooltip": "Install as a desktop app for faster access and a native experience",
+    "updateAvailable": "Update available",
+    "updateReady": "A new version is ready to apply",
+    "updateNow": "Update now"
   },
   "about": {
     "title": "About",
@@ -323,6 +327,14 @@
     "delete": "Delete",
     "ok": "OK",
     "success": "Success"
+  },
+  "pagination": {
+    "navigation": "Pagination",
+    "previous": "Previous",
+    "previousAria": "Go to previous page",
+    "next": "Next",
+    "nextAria": "Go to next page",
+    "morePages": "More pages"
   },
   "settings": {
     "title": "Settings",
@@ -460,13 +472,17 @@
     "switchFailed": "Failed to switch backend",
     "displaying": "Displaying",
     "collecting": "Collecting",
+    "healthy": "Healthy",
     "unhealthy": "Abnormal",
+    "unknown": "Unknown",
     "collect": "Collect",
     "setDisplay": "Set Display",
     "selectBackend": "Select Backend",
     "manageBackends": "Settings",
     "firstBackendAutoActive": "First backend automatically set as active",
     "verificationFailed": "Backend verification failed. Please check the host address and token.",
+    "clickToTestConnection": "Click to test connection",
+    "testFailed": "Test failed",
     "preferencesTab": "Preferences",
     "faviconProvider": "Favicon Provider",
     "faviconProviderDescription": "Choose the service used to display website icons in the domain list. favicon.im is recommended for users in China.",

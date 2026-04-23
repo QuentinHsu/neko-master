@@ -1,8 +1,23 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+const APP_LOCALE_MAP: Record<string, string> = {
+  en: "en-US",
+  zh: "zh-CN",
+};
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+export function getIntlLocale(locale?: string): string {
+  const normalizedLocale =
+    locale ||
+    (typeof document !== "undefined" && document.documentElement.lang) ||
+    (typeof navigator !== "undefined" && navigator.language) ||
+    "en";
+
+  return APP_LOCALE_MAP[normalizedLocale] || normalizedLocale;
 }
 
 function formatTrafficUnitValue(value: number, unitIndex: number): string {
@@ -40,10 +55,19 @@ export function formatRateBytes(bytesPerSecond: number): string {
   return formatTrafficUnits(bytesPerSecond, "/s");
 }
 
-export function formatNumber(num: number): string {
-  if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
-  if (num >= 1000) return (num / 1000).toFixed(1) + "K";
-  return num.toString();
+export function formatInteger(num: number, locale?: string): string {
+  return new Intl.NumberFormat(getIntlLocale(locale)).format(num);
+}
+
+export function formatNumber(num: number, locale?: string): string {
+  if (!Number.isFinite(num)) {
+    return "0";
+  }
+
+  return new Intl.NumberFormat(getIntlLocale(locale), {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(num);
 }
 
 function parseApiTimestamp(dateString: string): Date {
@@ -71,20 +95,24 @@ function parseApiTimestamp(dateString: string): Date {
   return new Date(raw);
 }
 
-export function formatDuration(dateString: string): string {
+export function formatDuration(dateString: string, locale?: string): string {
   const date = parseApiTimestamp(dateString);
   if (Number.isNaN(date.getTime())) return "-";
 
   const now = new Date();
   const diff = Math.max(0, now.getTime() - date.getTime());
+  const formatter = new Intl.RelativeTimeFormat(getIntlLocale(locale), {
+    numeric: "auto",
+    style: "short",
+  });
 
   const seconds = Math.floor(diff / 1000);
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
 
-  if (days > 0) return `${days}d ago`;
-  if (hours > 0) return `${hours}h ago`;
-  if (minutes > 0) return `${minutes}m ago`;
-  return `${seconds}s ago`;
+  if (days > 0) return formatter.format(-days, "day");
+  if (hours > 0) return formatter.format(-hours, "hour");
+  if (minutes > 0) return formatter.format(-minutes, "minute");
+  return formatter.format(-seconds, "second");
 }

@@ -11,10 +11,10 @@ import {
   CartesianGrid,
 } from "recharts";
 import { Activity, Clock, BarChart3, Loader2 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn, formatBytes } from "@/lib/utils";
+import { cn, formatBytes, getIntlLocale } from "@/lib/utils";
 import type { TrafficTrendPoint } from "@neko-master/shared";
 
 type TimeRange = "30m" | "1h" | "24h" | "today";
@@ -42,6 +42,7 @@ export const TrafficTrendChart = React.memo(
   }: TrafficTrendChartProps) {
     const t = useTranslations("trend");
     const chartT = useTranslations("chart");
+    const locale = getIntlLocale(useLocale());
     
     // Track if we've ever received data to avoid showing empty state on initial load
     const hasEverReceivedData = useRef(false);
@@ -92,11 +93,11 @@ export const TrafficTrendChart = React.memo(
         const date = new Date(timeStr);
         const timeLabel =
           granularity === "day"
-            ? date.toLocaleDateString(undefined, {
+            ? date.toLocaleDateString(locale, {
                 month: "short",
                 day: "numeric",
               })
-            : date.toLocaleTimeString(undefined, {
+            : date.toLocaleTimeString(locale, {
                 hour: "2-digit",
                 minute: "2-digit",
                 hour12: false,
@@ -109,7 +110,7 @@ export const TrafficTrendChart = React.memo(
           timestamp: date.getTime(), // for sorting/debugging
         };
       });
-    }, [data, granularity]);
+    }, [data, granularity, locale]);
 
     // Custom tooltip - show local time
     const CustomTooltip = React.useCallback(
@@ -123,12 +124,12 @@ export const TrafficTrendChart = React.memo(
           const date = new Date(timeStr);
           const title =
             granularity === "day"
-              ? date.toLocaleDateString(undefined, {
+              ? date.toLocaleDateString(locale, {
                   year: "numeric",
                   month: "short",
                   day: "numeric",
                 })
-              : date.toLocaleString(undefined, {
+              : date.toLocaleString(locale, {
                   month: "short",
                   day: "numeric",
                   hour: "2-digit",
@@ -169,7 +170,7 @@ export const TrafficTrendChart = React.memo(
         }
         return null;
       },
-      [chartT, t, granularity],
+      [chartT, t, granularity, locale],
     );
 
     // Loading skeleton - show when loading or on initial load with no data yet

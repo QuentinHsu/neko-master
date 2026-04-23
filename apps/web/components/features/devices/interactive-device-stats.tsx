@@ -551,7 +551,7 @@ export function InteractiveDeviceStats({
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="glass">
             <TabsTrigger value="domains">{domainsT("domainList")}</TabsTrigger>
-            <TabsTrigger value="ips">IP Addresses</TabsTrigger>
+            <TabsTrigger value="ips">{domainsT("ipList")}</TabsTrigger>
           </TabsList>
           <TabsContent value="domains" className="mt-4">
             <DomainStatsTable

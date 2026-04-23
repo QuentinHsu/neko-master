@@ -69,7 +69,12 @@ function LocaleRoute() {
 
   useEffect(() => {
     document.documentElement.lang = locale;
-    document.title = "Neko Master";
+    const messages = getMessages(locale) as {
+      metadata?: {
+        title?: string;
+      };
+    };
+    document.title = messages.metadata?.title || "Neko Master";
   }, [locale]);
 
   return <LocaleApp locale={locale} />;

@@ -383,7 +383,7 @@ export function InteractiveProxyStats({
                     <RechartsTooltip content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         const item = payload[0].payload;
-                        return (<div className="bg-background border border-border p-3 rounded-lg shadow-lg min-w-[160px]"><div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50"><Favicon domain={item.fullName} size="sm" /><span className="font-medium text-sm truncate max-w-[180px]" title={item.fullName}>{item.fullName}</span></div><div className="space-y-2 text-xs"><div className="flex justify-between items-center"><span className="text-muted-foreground">Total</span><span className="font-semibold">{formatBytes(item.total)}</span></div><div className="flex justify-between items-center"><span className="text-blue-500">Download</span><span>{formatBytes(item.download)}</span></div><div className="flex justify-between items-center"><span className="text-purple-500">Upload</span><span>{formatBytes(item.upload)}</span></div><div className="flex justify-between items-center pt-1 border-t border-border/50"><span className="text-emerald-500">Connections</span><span>{formatNumber(item.connections)}</span></div></div></div>);
+                        return (<div className="bg-background border border-border p-3 rounded-lg shadow-lg min-w-[160px]"><div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50"><Favicon domain={item.fullName} size="sm" /><span className="font-medium text-sm truncate max-w-[180px]" title={item.fullName}>{item.fullName}</span></div><div className="space-y-2 text-xs"><div className="flex justify-between items-center"><span className="text-muted-foreground">{t("total")}</span><span className="font-semibold">{formatBytes(item.total)}</span></div><div className="flex justify-between items-center"><span className="text-blue-500">{t("download")}</span><span>{formatBytes(item.download)}</span></div><div className="flex justify-between items-center"><span className="text-purple-500">{t("upload")}</span><span>{formatBytes(item.upload)}</span></div><div className="flex justify-between items-center pt-1 border-t border-border/50"><span className="text-emerald-500">{t("connections")}</span><span>{formatNumber(item.connections)}</span></div></div></div>);
                       }
                       return null;
                     }} cursor={{ fill: "rgba(128, 128, 128, 0.1)" }} />
@@ -404,7 +404,7 @@ export function InteractiveProxyStats({
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="glass">
             <TabsTrigger value="domains">{domainsT("domainList")}</TabsTrigger>
-            <TabsTrigger value="ips">IP Addresses</TabsTrigger>
+            <TabsTrigger value="ips">{domainsT("ipList")}</TabsTrigger>
           </TabsList>
           <TabsContent value="domains" className="mt-4">
             <DomainStatsTable

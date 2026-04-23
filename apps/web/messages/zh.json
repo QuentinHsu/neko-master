@@ -17,7 +17,9 @@
   },
   "header": {
     "title": "Neko Master",
-    "subtitle": "现代网关流量分析工具"
+    "subtitle": "现代网关流量分析工具",
+    "connected": "已连接",
+    "disconnected": "未连接"
   },
   "dashboard": {
     "title": "仪表盘",
@@ -286,7 +288,10 @@
   },
   "pwa": {
     "installApp": "安装应用",
-    "tooltip": "安装为桌面应用，享受更快的访问速度和原生体验"
+    "tooltip": "安装为桌面应用，享受更快的访问速度和原生体验",
+    "updateAvailable": "发现新版本",
+    "updateReady": "新版本已就绪，刷新后即可生效",
+    "updateNow": "立即更新"
   },
   "about": {
     "title": "关于",
@@ -322,6 +327,14 @@
     "delete": "删除",
     "ok": "确定",
     "success": "成功"
+  },
+  "pagination": {
+    "navigation": "分页导航",
+    "previous": "上一页",
+    "previousAria": "前往上一页",
+    "next": "下一页",
+    "nextAria": "前往下一页",
+    "morePages": "更多页"
   },
   "settings": {
     "title": "设置",
@@ -459,13 +472,17 @@
     "switchFailed": "后端切换失败",
     "displaying": "显示中",
     "collecting": "收集中",
+    "healthy": "正常",
     "unhealthy": "异常",
+    "unknown": "未知",
     "collect": "收集",
     "setDisplay": "设为显示",
     "selectBackend": "选择后端",
     "manageBackends": "设置",
     "firstBackendAutoActive": "第一个后端已自动设为显示",
     "verificationFailed": "后端验证失败，请检查地址和令牌是否正确",
+    "clickToTestConnection": "点击测试连接",
+    "testFailed": "测试失败",
     "preferencesTab": "偏好设置",
     "faviconProvider": "网站图标提供商",
     "faviconProviderDescription": "选择在域名列表中显示网站图标时使用的服务。favicon.im 在国内访问更快。",

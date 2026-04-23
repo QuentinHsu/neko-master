@@ -10,6 +10,7 @@ import type {
   DeviceStats,
 } from "@neko-master/shared";
 import { getAuthHeaders } from "./auth-queries";
+import { getIntlLocale } from "./utils";
 
 type RuntimeConfig = {
   API_URL?: string;
@@ -714,7 +715,7 @@ export function formatDateTimeForInput(date: Date): string {
 
 export function formatDateTimeDisplay(isoString: string, locale?: string): string {
   const date = new Date(isoString);
-  return date.toLocaleString(locale, {
+  return date.toLocaleString(getIntlLocale(locale), {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',

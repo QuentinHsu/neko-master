@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { RefreshCw } from "lucide-react";
 
 export function ServiceWorkerRegister() {
+  const t = useTranslations("pwa");
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
 
@@ -81,8 +82,8 @@ export function ServiceWorkerRegister() {
     <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
       <div className="bg-card border rounded-lg shadow-lg p-4 flex items-center gap-3 max-w-sm">
         <div className="flex-1">
-          <p className="text-sm font-medium">Update Available</p>
-          <p className="text-xs text-muted-foreground">A new version is ready</p>
+          <p className="text-sm font-medium">{t("updateAvailable")}</p>
+          <p className="text-xs text-muted-foreground">{t("updateReady")}</p>
         </div>
         <Button 
           size="sm" 
@@ -90,7 +91,7 @@ export function ServiceWorkerRegister() {
           className="gap-1.5"
         >
           <RefreshCw className="h-3.5 w-3.5" />
-          Update
+          {t("updateNow")}
         </Button>
       </div>
     </div>

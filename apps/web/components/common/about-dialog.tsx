@@ -19,6 +19,7 @@ const GITHUB_URL = `https://github.com/${GITHUB_REPO}`;
 
 export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
   const aboutT = useTranslations("about");
+  const commonT = useTranslations("common");
   const { latestVersion, hasUpdate, isChecking, stars, checkNow } =
     useVersionCheck(APP_VERSION);
 
@@ -31,7 +32,7 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              About
+              {aboutT("title")}
             </CardTitle>
             <Button
               variant="ghost"
@@ -39,7 +40,7 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
               className="h-8 w-8 rounded-full"
               onClick={() => onOpenChange(false)}>
               <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
+              <span className="sr-only">{commonT("close")}</span>
             </Button>
           </div>
         </CardHeader>

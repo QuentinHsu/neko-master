@@ -72,6 +72,7 @@ export function Navigation({
   const headerT = useTranslations("header");
   const backendT = useTranslations("backend");
   const aboutT = useTranslations("about");
+  const commonT = useTranslations("common");
   const dashboardT = useTranslations("dashboard");
   const { latestVersion, hasUpdate, isChecking, stars, checkNow } =
     useVersionCheck(APP_VERSION);
@@ -329,7 +330,7 @@ export function Navigation({
               <button
                 onClick={() => setAboutOpen(false)}
                 className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors -mr-1.5"
-                aria-label="Close">
+                aria-label={commonT("close")}>
                 <X className="w-5 h-5" />
               </button>
             </CardHeader>

@@ -14,11 +14,6 @@ import {
 const locales = ["en", "zh"] as const;
 type Locale = (typeof locales)[number];
 
-const localeLabels: Record<Locale, string> = {
-  en: "English",
-  zh: "中文",
-};
-
 export function LanguageSwitcher() {
   const router = useRouter();
   const pathname = usePathname();
@@ -45,11 +40,10 @@ export function LanguageSwitcher() {
             onClick={() => handleLocaleChange(locale)}
             className={currentLocale === locale ? "bg-muted" : ""}
           >
-            {localeLabels[locale]}
+            {t(locale)}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
-

@@ -42,12 +42,12 @@ export function Header({
               {isConnected ? (
                 <>
                   <Wifi className="w-3 h-3 text-emerald-500" />
-                  <span className="text-[10px] text-emerald-500 font-medium">已连接</span>
+                  <span className="text-[10px] text-emerald-500 font-medium">{t("connected")}</span>
                 </>
               ) : (
                 <>
                   <WifiOff className="w-3 h-3 text-red-500" />
-                  <span className="text-[10px] text-red-500 font-medium">未连接</span>
+                  <span className="text-[10px] text-red-500 font-medium">{t("disconnected")}</span>
                 </>
               )}
             </div>
