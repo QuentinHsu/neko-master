@@ -1,17 +1,14 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { BarChart3, Link2, Waypoints } from "lucide-react";
+import { BarChart3, Waypoints } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, BarChart, Bar, XAxis, YAxis, Cell as BarCell, LabelList } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { CountryFlag, extractCountryCodeFromText, stripLeadingFlagEmoji } from "@/components/features/countries/country-flag";
-import { formatBytes, formatNumber, formatRateBytes } from "@/lib/utils";
-import { cn } from "@/lib/utils";
-import { useIsWindows } from "@/lib/hooks/use-is-windows";
+import { CountryFlag } from "@/components/features/countries/country-flag";
+import { cn, formatBytes, formatNumber, formatRateBytes } from "@/lib/utils";
 import { type TimeRange } from "@/lib/api";
 import { useStableTimeRange } from "@/lib/hooks/use-stable-time-range";
 import { useStatsWebSocket } from "@/lib/websocket";
@@ -25,6 +22,14 @@ import { DomainStatsTable, IPStatsTable } from "@/components/features/stats/tabl
 import { InsightChartSkeleton, InsightThreePanelSkeleton } from "@/components/ui/insight-skeleton";
 import { COLORS, type PageSize } from "@/lib/stats-utils";
 import type { ProxyStats, StatsSummary } from "@neko-master/shared";
+import { ProxyNodeList } from "./proxy-node-list";
+import {
+  getProxyCountryCode,
+  getProxyDisplayName,
+  getProxyTotal,
+  sortProxyStats,
+  type ProxySortBy,
+} from "./proxy-node-utils";
 
 interface InteractiveProxyStatsProps {
   data?: ProxyStats[];
@@ -35,33 +40,14 @@ interface InteractiveProxyStatsProps {
 }
 const PROXY_DETAIL_WS_MIN_PUSH_MS = 3_000;
 
-function normalizeProxyName(name: string): string {
-  const normalized = name
-    .trim()
-    .replace(/^\["?/, "")
-    .replace(/"?\]$/, "");
-  const parts = normalized
-    .split(">")
-    .map((part) => part.trim())
-    .filter(Boolean);
-  return parts[0] || normalized;
-}
-
-function simplifyProxyName(name: string): string {
-  if (!name) return "DIRECT";
-  return stripLeadingFlagEmoji(normalizeProxyName(name));
-}
-
-function getProxyCountryCode(name: string): string {
-  const cleaned = normalizeProxyName(name);
-  if (cleaned === "DIRECT" || cleaned === "Direct") {
-    return "DIRECT";
-  }
-  return extractCountryCodeFromText(cleaned) ?? "UNKNOWN";
-}
-
-function renderCustomBarLabel(props: any) {
-  const { x, y, width, value, height } = props;
+function renderCustomBarLabel(props: {
+  x?: number;
+  y?: number;
+  width?: number;
+  value?: number;
+  height?: number;
+}) {
+  const { x = 0, y = 0, width = 0, value = 0, height = 0 } = props;
   return (
     <text x={x + width + 6} y={y + height / 2} fill="currentColor" fontSize={11} dominantBaseline="central" textAnchor="start" style={{ fontVariantNumeric: "tabular-nums" }}>
       {formatBytes(value, 0)}
@@ -109,7 +95,6 @@ export function InteractiveProxyStats({
   const queryClient = useQueryClient();
   const stableTimeRange = useStableTimeRange(timeRange, { roundToMinute: true });
   const detailTimeRange = stableTimeRange;
-  const isWindows = useIsWindows();
 
   const { data: listData, isLoading: listQueryLoading } = useProxies({
     activeBackendId,
@@ -122,6 +107,7 @@ export function InteractiveProxyStats({
   const listLoading = !data && listQueryLoading && !listData;
   
   const [selectedProxy, setSelectedProxy] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<ProxySortBy>("traffic");
   const [activeTab, setActiveTab] = useState("domains");
   const [detailPageSize, setDetailPageSize] = useState<PageSize>(10);
   const [showDomainBarLabels, setShowDomainBarLabels] = useState(true);
@@ -141,9 +127,9 @@ export function InteractiveProxyStats({
   const chartData = useMemo(() => {
     if (!proxyData) return [];
     return proxyData.map((proxy, index) => ({
-      name: simplifyProxyName(proxy.chain),
+      name: getProxyDisplayName(proxy.chain),
       rawName: proxy.chain,
-      value: proxy.totalDownload + proxy.totalUpload,
+      value: getProxyTotal(proxy),
       download: proxy.totalDownload,
       upload: proxy.totalUpload,
       connections: proxy.totalConnections,
@@ -155,20 +141,23 @@ export function InteractiveProxyStats({
     }));
   }, [proxyData]);
 
-  const totalTraffic = useMemo(() => chartData.reduce((sum, item) => sum + item.value, 0), [chartData]);
+  const sortedProxyData = useMemo(
+    () => sortProxyStats(proxyData, sortBy),
+    [proxyData, sortBy],
+  );
+
   const topProxies = useMemo(() => [...chartData].sort((a, b) => b.value - a.value).slice(0, 4), [chartData]);
-  const maxTotal = useMemo(() => chartData.length ? Math.max(...chartData.map(p => p.value)) : 1, [chartData]);
 
   useEffect(() => {
-    if (chartData.length === 0) {
+    if (sortedProxyData.length === 0) {
       setSelectedProxy(null);
       return;
     }
-    const exists = !!selectedProxy && chartData.some((item) => item.rawName === selectedProxy);
+    const exists = !!selectedProxy && sortedProxyData.some((item) => item.chain === selectedProxy);
     if (!exists) {
-      setSelectedProxy(chartData[0].rawName);
+      setSelectedProxy(sortedProxyData[0]?.chain ?? null);
     }
-  }, [chartData, selectedProxy]);
+  }, [sortedProxyData, selectedProxy]);
 
   const wsDetailEnabled = autoRefresh && !!activeBackendId && !!selectedProxy;
   const { status: wsDetailStatus } = useStatsWebSocket({
@@ -346,54 +335,21 @@ export function InteractiveProxyStats({
 
         {/* Proxy List */}
         <Card className="min-w-0 md:col-span-1 xl:col-span-4">
-          <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t("title")}</CardTitle></CardHeader>
           <CardContent className="p-3">
-            <ScrollArea className="h-[280px] pr-3">
-              <div className="space-y-2">
-                {chartData.map((item) => {
-                  const percentage = totalTraffic > 0 ? (item.value / totalTraffic) * 100 : 0;
-                  const barPercent = (item.value / maxTotal) * 100;
-                  const isSelected = selectedProxy === item.rawName;
-                  const badgeColor = item.rank === 0 ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" : item.rank === 1 ? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300" : item.rank === 2 ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" : "bg-muted text-muted-foreground";
-                  const rawDisplayName = item.rawName || item.name;
-                  return (
-                    <button key={item.rawName} onClick={() => handleProxyClick(item.rawName)} className={cn("w-full p-2.5 rounded-xl border text-left transition-all duration-200 overflow-hidden", isSelected ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border/50 bg-card/50 hover:bg-card hover:border-primary/30")}>
-                      <div className="flex items-center gap-2 mb-1.5 min-w-0">
-                        <span className={cn("w-5 h-5 rounded-md text-[10px] font-bold flex items-center justify-center shrink-0", badgeColor)}>{item.rank + 1}</span>
-                        <span className={cn("flex-1 text-sm font-medium truncate min-w-0", isWindows && "emoji-flag-font")} title={rawDisplayName}>
-                          {rawDisplayName}
-                        </span>
-                        <span className="text-sm font-bold tabular-nums shrink-0 whitespace-nowrap ml-auto">{formatBytes(item.value)}</span>
-                      </div>
-                      <div className="pl-7 space-y-1">
-                        <div className="h-1.5 rounded-full bg-muted overflow-hidden flex">
-                          <div className="h-full bg-blue-500 dark:bg-blue-400" style={{ width: `${item.value > 0 ? (item.download / item.value) * barPercent : 0}%` }} />
-                          <div className="h-full bg-purple-500 dark:bg-purple-400" style={{ width: `${item.value > 0 ? (item.upload / item.value) * barPercent : 0}%` }} />
-                        </div>
-                        <div className="grid grid-cols-1 min-[300px]:grid-cols-[1fr_auto] gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                            <span className="text-blue-500 dark:text-blue-400 whitespace-nowrap">↓ {formatBytes(item.download)}</span>
-                            <span className="text-purple-500 dark:text-blue-400 whitespace-nowrap">↑ {formatBytes(item.upload)}</span>
-                            <span className="flex items-center gap-1 tabular-nums"><Link2 className="w-3 h-3" />{formatNumber(item.connections)}</span>
-                          </div>
-                          <span className="tabular-nums text-right min-[300px]:text-right">{percentage.toFixed(1)}%</span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px] text-muted-foreground/90">
-                          <span className="flex min-w-0 items-center justify-between gap-2 whitespace-nowrap">
-                            <span className="text-blue-500 dark:text-blue-400">{statsT("peakDownload")}</span>
-                            <span className="tabular-nums text-right">{formatRate(item.maxDownloadPerSecond)}</span>
-                          </span>
-                          <span className="flex min-w-0 items-center justify-between gap-2 whitespace-nowrap">
-                            <span className="text-purple-500 dark:text-purple-400">{statsT("peakUpload")}</span>
-                            <span className="tabular-nums text-right">{formatRate(item.maxUploadPerSecond)}</span>
-                          </span>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </ScrollArea>
+            <ProxyNodeList
+              proxies={proxyData}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+              onSelect={handleProxyClick}
+              selectedProxy={selectedProxy}
+              scrollHeightClassName="h-[280px]"
+              showPeakRates
+              peakDownloadLabel={statsT("peakDownload")}
+              peakUploadLabel={statsT("peakUpload")}
+              title={t("proxyNodes")}
+              emptyTitle={t("noData")}
+              emptyHint={emptyHint}
+            />
           </CardContent>
         </Card>
 

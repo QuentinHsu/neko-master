@@ -129,7 +129,7 @@
     "noDataHint": "开始采集后，这里会显示域名流量。"
   },
   "topProxies": {
-    "title": "热门代理",
+    "title": "热门代理节点",
     "sortByTraffic": "按流量排序",
     "sortByConnections": "按连接数排序",
     "viewAll": "查看全部",

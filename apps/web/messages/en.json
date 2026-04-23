@@ -130,7 +130,7 @@
     "noDataHint": "Traffic data will appear here after collection starts."
   },
   "topProxies": {
-    "title": "Top Proxies",
+    "title": "Top Proxy Nodes",
     "sortByTraffic": "Sort by traffic",
     "sortByConnections": "Sort by connections",
     "viewAll": "View all",
