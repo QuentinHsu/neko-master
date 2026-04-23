@@ -238,13 +238,15 @@ export const TrafficRankingList = memo(function TrafficRankingList({
 
   return (
     <div className="space-y-3 h-full flex flex-col">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-          {icon}
-          {title}
-        </h3>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 pt-0.5">
+          <div className="text-sm font-semibold leading-none text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+            {icon}
+            {title}
+          </div>
+        </div>
         {onSortChange ? (
-          <div className="flex items-center gap-0.5 bg-muted/50 rounded-lg p-0.5">
+          <div className="flex shrink-0 items-center gap-0.5 rounded-lg bg-muted/50 p-0.5">
             <Button
               variant="ghost"
               size="icon"

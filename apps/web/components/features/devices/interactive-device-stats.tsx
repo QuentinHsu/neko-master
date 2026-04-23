@@ -368,7 +368,7 @@ export function InteractiveDeviceStats({
 
         {/* Device List */}
         <Card className="min-w-0 md:col-span-1 xl:col-span-4">
-          <CardContent className="p-3">
+          <CardContent className="px-3 pt-0 pb-3">
             <TrafficRankingList
               title={t("title")}
               icon={<Smartphone className="w-4 h-4" />}

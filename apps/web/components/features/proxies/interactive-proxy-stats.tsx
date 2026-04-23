@@ -335,7 +335,7 @@ export function InteractiveProxyStats({
 
         {/* Proxy List */}
         <Card className="min-w-0 md:col-span-1 xl:col-span-4">
-          <CardContent className="p-3">
+          <CardContent className="px-3 pt-0 pb-3">
             <ProxyNodeList
               proxies={proxyData}
               sortBy={sortBy}
