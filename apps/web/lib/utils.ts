@@ -5,42 +5,39 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatBytes(bytes: number, decimals = 2): string {
-  const normalizedBytes = Number(bytes);
-  if (!Number.isFinite(normalizedBytes) || normalizedBytes === 0) return "0 B";
-  if (normalizedBytes < 0) return `-${formatBytes(-normalizedBytes, decimals)}`;
+function formatTrafficUnitValue(value: number, unitIndex: number): string {
+  if (!Number.isFinite(value)) {
+    return "0";
+  }
+  if (unitIndex <= 1) {
+    return Math.round(value).toString();
+  }
+  return value.toFixed(2);
+}
+
+function formatTrafficUnits(value: number, suffix = ""): string {
+  const normalizedValue = Number(value);
+  if (!Number.isFinite(normalizedValue) || normalizedValue === 0) return `0 B${suffix}`;
+  if (normalizedValue < 0) return `-${formatTrafficUnits(-normalizedValue, suffix)}`;
 
   const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
   const sizes = ["B", "KB", "MB", "GB", "TB", "PB"];
-
-  const exponent = Math.log(normalizedBytes) / Math.log(k);
+  const exponent = Math.log(normalizedValue) / Math.log(k);
   const rawIndex = Number.isFinite(exponent) ? Math.floor(exponent) : 0;
   const i = rawIndex < 0 ? 0 : Math.min(rawIndex, sizes.length - 1);
   const unit = sizes[i] ?? "B";
-  const scaled = normalizedBytes / Math.pow(k, i);
+  const scaled = normalizedValue / Math.pow(k, i);
   const safeScaled = Number.isFinite(scaled) ? scaled : 0;
 
-  return `${parseFloat(safeScaled.toFixed(dm))} ${unit}`;
+  return `${formatTrafficUnitValue(safeScaled, i)} ${unit}${suffix}`;
+}
+
+export function formatBytes(bytes: number, _decimals = 2): string {
+  return formatTrafficUnits(bytes);
 }
 
 export function formatRateBytes(bytesPerSecond: number): string {
-  const normalizedRate = Number(bytesPerSecond);
-  if (!Number.isFinite(normalizedRate) || normalizedRate === 0) return "0 B/s";
-  if (normalizedRate < 0) return `-${formatRateBytes(-normalizedRate)}`;
-
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB", "PB"];
-  const exponent = Math.log(normalizedRate) / Math.log(k);
-  const rawIndex = Number.isFinite(exponent) ? Math.floor(exponent) : 0;
-  const i = rawIndex < 0 ? 0 : Math.min(rawIndex, sizes.length - 1);
-  const unit = sizes[i] ?? "B";
-  const scaled = normalizedRate / Math.pow(k, i);
-  const safeScaled = Number.isFinite(scaled) ? scaled : 0;
-  const decimals = unit === "KB" ? 0 : i >= 2 ? 2 : 0;
-  const value = decimals === 0 ? Math.round(safeScaled).toString() : safeScaled.toFixed(decimals);
-
-  return `${value} ${unit}/s`;
+  return formatTrafficUnits(bytesPerSecond, "/s");
 }
 
 export function formatNumber(num: number): string {
