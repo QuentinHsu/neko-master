@@ -43,7 +43,14 @@ function extractSection(version) {
   }
 
   const next = changelog.indexOf('\n## [', start + heading.length);
-  return (next === -1 ? changelog.slice(start) : changelog.slice(start, next)).trim();
+  const section = (next === -1 ? changelog.slice(start) : changelog.slice(start, next)).trim();
+  const firstLineBreak = section.indexOf('\n');
+
+  if (firstLineBreak === -1) {
+    return '';
+  }
+
+  return section.slice(firstLineBreak + 1).trim();
 }
 
 function buildCompareUrl(repository, previousTag, tag) {
