@@ -656,7 +656,7 @@ Single container runs both services:
 ```yaml
 services:
   neko-master:
-    image: foru17/neko-master:latest
+    image: quentinhsu/neko-master:latest
     ports:
       - "3000:3000"
       - "3002:3002"

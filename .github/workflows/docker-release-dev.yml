@@ -19,8 +19,7 @@ on:
           - major
 
 env:
-  DOCKERHUB_IMAGE: foru17/neko-master
-  DOCKERHUB_LEGACY_IMAGE: foru17/clash-master
+  DOCKERHUB_IMAGE: quentinhsu/neko-master
 
 jobs:
   validate-branch:
@@ -149,9 +148,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: |
-            ${{ env.DOCKERHUB_IMAGE }}
-            ${{ env.DOCKERHUB_LEGACY_IMAGE }}
+          images: ${{ env.DOCKERHUB_IMAGE }}
           tags: |
             type=raw,value=dev
             type=raw,value=${{ needs.prepare-release.outputs.version }}

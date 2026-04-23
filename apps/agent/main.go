@@ -10,8 +10,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/foru17/neko-master/apps/agent/internal/agent"
-	"github.com/foru17/neko-master/apps/agent/internal/config"
+	"github.com/QuentinHsu/neko-master/apps/agent/internal/agent"
+	"github.com/QuentinHsu/neko-master/apps/agent/internal/config"
 )
 
 func main() {

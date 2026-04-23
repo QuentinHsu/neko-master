@@ -1,3 +1,3 @@
-module github.com/foru17/neko-master/apps/agent
+module github.com/QuentinHsu/neko-master/apps/agent
 
 go 1.22

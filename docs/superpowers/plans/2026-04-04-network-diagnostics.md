@@ -639,7 +639,7 @@ Add to `Usage()` optional section:
 In `runner.go`, add the import:
 
 ```go
-"github.com/foru17/neko-master/apps/agent/internal/diagnostic"
+"github.com/QuentinHsu/neko-master/apps/agent/internal/diagnostic"
 ```
 
 Add a new field to the Runner struct:

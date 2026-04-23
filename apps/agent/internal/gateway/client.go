@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/foru17/neko-master/apps/agent/internal/domain"
+	"github.com/QuentinHsu/neko-master/apps/agent/internal/domain"
 )
 
 var (

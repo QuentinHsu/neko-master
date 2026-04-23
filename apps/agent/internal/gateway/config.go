@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/foru17/neko-master/apps/agent/internal/domain"
+	"github.com/QuentinHsu/neko-master/apps/agent/internal/domain"
 )
 
 func (c *Client) GetConfigSnapshot(ctx context.Context) (*domain.GatewayConfigSnapshot, error) {

@@ -18,9 +18,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/foru17/neko-master/apps/agent/internal/config"
-	"github.com/foru17/neko-master/apps/agent/internal/domain"
-	"github.com/foru17/neko-master/apps/agent/internal/gateway"
+	"github.com/QuentinHsu/neko-master/apps/agent/internal/config"
+	"github.com/QuentinHsu/neko-master/apps/agent/internal/domain"
+	"github.com/QuentinHsu/neko-master/apps/agent/internal/gateway"
 )
 
 type trackedFlow struct {

@@ -20,9 +20,9 @@
 
 <p align="center">
   <a href="https://github.com/QuentinHsu/neko-master/stargazers"><img src="https://img.shields.io/github/stars/QuentinHsu/neko-master?style=flat-square&color=yellow" alt="Stars"></a>
-  <a href="https://hub.docker.com/r/foru17/neko-master"><img src="https://img.shields.io/docker/pulls/foru17/neko-master?style=flat-square&color=blue&logo=docker" alt="Docker Pulls"></a>
-  <a href="https://hub.docker.com/r/foru17/neko-master"><img src="https://img.shields.io/docker/v/foru17/neko-master?style=flat-square&label=Docker&color=2496ED" alt="Docker Version"></a>
-  <a href="https://hub.docker.com/r/foru17/neko-master"><img src="https://img.shields.io/docker/image-size/foru17/neko-master/latest?style=flat-square&logo=docker" alt="Image Size"></a>
+  <a href="https://hub.docker.com/r/quentinhsu/neko-master"><img src="https://img.shields.io/docker/pulls/quentinhsu/neko-master?style=flat-square&color=blue&logo=docker" alt="Docker Pulls"></a>
+  <a href="https://hub.docker.com/r/quentinhsu/neko-master"><img src="https://img.shields.io/docker/v/quentinhsu/neko-master?style=flat-square&label=Docker&color=2496ED" alt="Docker Version"></a>
+  <a href="https://hub.docker.com/r/quentinhsu/neko-master"><img src="https://img.shields.io/docker/image-size/quentinhsu/neko-master/latest?style=flat-square&logo=docker" alt="Image Size"></a>
   <a href="https://github.com/QuentinHsu/neko-master/blob/main/LICENSE"><img src="https://img.shields.io/github/license/QuentinHsu/neko-master?style=flat-square&color=green" alt="License"></a>
   <img src="https://img.shields.io/badge/Node.js-22-339933?style=flat-square&logo=node.js">
   <a href="https://github.com/QuentinHsu/neko-master/actions/workflows/docker-release-main.yml"><img src="https://img.shields.io/github/actions/workflow/status/QuentinHsu/neko-master/docker-release-main.yml?style=flat-square&label=Docker%20Release" alt="Docker Release"></a>
@@ -112,7 +112,7 @@ It is a lightweight analytics dashboard designed for modern gateway environments
 ```yaml
 services:
   neko-master:
-    image: foru17/neko-master:latest
+    image: quentinhsu/neko-master:latest
     container_name: neko-master
     restart: unless-stopped
     ports:
@@ -138,7 +138,7 @@ services:
 ```yaml
 services:
   neko-master:
-    image: foru17/neko-master:latest
+    image: quentinhsu/neko-master:latest
     container_name: neko-master
     restart: unless-stopped
     ports:
@@ -179,7 +179,7 @@ docker run -d \
   -v $(pwd)/data:/app/data \
   -e COOKIE_SECRET="$COOKIE_SECRET" \
   --restart unless-stopped \
-  foru17/neko-master:latest
+  quentinhsu/neko-master:latest
 
 # Real-time WS (with reverse proxy)
 docker run -d \
@@ -189,7 +189,7 @@ docker run -d \
   -v $(pwd)/data:/app/data \
   -e COOKIE_SECRET="$COOKIE_SECRET" \
   --restart unless-stopped \
-  foru17/neko-master:latest
+  quentinhsu/neko-master:latest
 ```
 
 Open <http://localhost:3000> to get started.
@@ -843,7 +843,7 @@ If you forgot the token, temporarily set `FORCE_ACCESS_CONTROL_OFF=true` to ente
      -p 3000:3000 \
      -v $(pwd)/data:/app/data \
      -e FORCE_ACCESS_CONTROL_OFF=true \
-     foru17/neko-master:latest
+     quentinhsu/neko-master:latest
    ```
 
 3. Reset token, then remove this flag and restart normally.
