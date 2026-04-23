@@ -35,7 +35,7 @@ export default defineConfig({
         process.env.NEXT_PUBLIC_WS_URL || "",
       ),
       "process.env.NEXT_PUBLIC_GITHUB_REPO": JSON.stringify(
-        process.env.NEXT_PUBLIC_GITHUB_REPO || "foru17/neko-master",
+        process.env.NEXT_PUBLIC_GITHUB_REPO || "QuentinHsu/neko-master",
       ),
       "process.env.API_URL": JSON.stringify(process.env.API_URL || ""),
     },

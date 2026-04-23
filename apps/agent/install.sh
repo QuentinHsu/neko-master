@@ -28,10 +28,10 @@ Neko Master is a centralized traffic analytics panel.
 Agent runs near your local gateway and reports data securely to the panel.
 
 Project:
-  https://github.com/foru17/neko-master
+  https://github.com/QuentinHsu/neko-master
 
 Agent docs:
-  https://github.com/foru17/neko-master/tree/main/docs/agent
+  https://github.com/QuentinHsu/neko-master/tree/main/docs/agent
 
 EOF
 }
@@ -101,7 +101,7 @@ normalize_arch() {
 # Query GitHub releases API for the latest agent tag (e.g. "agent-v0.2.0").
 # Returns empty string on failure.
 get_latest_remote_tag() {
-	repo="${1:-foru17/neko-master}"
+	repo="${1:-QuentinHsu/neko-master}"
 	api_url="https://api.github.com/repos/${repo}/releases/latest"
 	tag=""
 	if command -v curl >/dev/null 2>&1; then
@@ -199,7 +199,7 @@ main() {
 	# Environment defaults
 	NEKO_GATEWAY_TYPE="${NEKO_GATEWAY_TYPE:-clash}"
 	NEKO_GATEWAY_TOKEN="${NEKO_GATEWAY_TOKEN:-}"
-	NEKO_AGENT_REPO="${NEKO_AGENT_REPO:-foru17/neko-master}"
+	NEKO_AGENT_REPO="${NEKO_AGENT_REPO:-QuentinHsu/neko-master}"
 	NEKO_AGENT_VERSION="${NEKO_AGENT_VERSION:-latest}"
 	NEKO_PACKAGE_URL="${NEKO_PACKAGE_URL:-}"
 	NEKO_CHECKSUMS_URL="${NEKO_CHECKSUMS_URL:-}"

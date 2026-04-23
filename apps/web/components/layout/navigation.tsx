@@ -43,7 +43,7 @@ interface NavigationProps {
 
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "0.0.0";
 const GITHUB_REPO =
-  process.env.NEXT_PUBLIC_GITHUB_REPO || "foru17/neko-master";
+  process.env.NEXT_PUBLIC_GITHUB_REPO || "QuentinHsu/neko-master";
 const GITHUB_URL = `https://github.com/${GITHUB_REPO}`;
 
 const NAV_ITEMS: ReadonlyArray<{ id: TabId; icon: typeof LayoutDashboard }> = [

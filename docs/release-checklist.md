@@ -63,7 +63,7 @@ Expected result:
 2. Validate one Linux host install using script:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/foru17/neko-master/main/apps/agent/install.sh \
+curl -fsSL https://raw.githubusercontent.com/QuentinHsu/neko-master/main/apps/agent/install.sh \
   | env NEKO_SERVER='http://<panel>:3000' \
         NEKO_BACKEND_ID='<id>' \
         NEKO_BACKEND_TOKEN='<token>' \

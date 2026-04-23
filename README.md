@@ -14,13 +14,18 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/foru17/neko-master/stargazers"><img src="https://img.shields.io/github/stars/foru17/neko-master?style=flat-square&color=yellow" alt="Stars"></a>
+  Fork maintained at <a href="https://github.com/QuentinHsu/neko-master">QuentinHsu/neko-master</a><br>
+  Modified from the original project <a href="https://github.com/foru17/neko-master">foru17/neko-master</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/QuentinHsu/neko-master/stargazers"><img src="https://img.shields.io/github/stars/QuentinHsu/neko-master?style=flat-square&color=yellow" alt="Stars"></a>
   <a href="https://hub.docker.com/r/foru17/neko-master"><img src="https://img.shields.io/docker/pulls/foru17/neko-master?style=flat-square&color=blue&logo=docker" alt="Docker Pulls"></a>
   <a href="https://hub.docker.com/r/foru17/neko-master"><img src="https://img.shields.io/docker/v/foru17/neko-master?style=flat-square&label=Docker&color=2496ED" alt="Docker Version"></a>
   <a href="https://hub.docker.com/r/foru17/neko-master"><img src="https://img.shields.io/docker/image-size/foru17/neko-master/latest?style=flat-square&logo=docker" alt="Image Size"></a>
-  <a href="https://github.com/foru17/neko-master/blob/main/LICENSE"><img src="https://img.shields.io/github/license/foru17/neko-master?style=flat-square&color=green" alt="License"></a>
+  <a href="https://github.com/QuentinHsu/neko-master/blob/main/LICENSE"><img src="https://img.shields.io/github/license/QuentinHsu/neko-master?style=flat-square&color=green" alt="License"></a>
   <img src="https://img.shields.io/badge/Node.js-22-339933?style=flat-square&logo=node.js">
-  <a href="https://github.com/foru17/neko-master/actions/workflows/docker-build.yml"><img src="https://img.shields.io/github/actions/workflow/status/foru17/neko-master/docker-build.yml?style=flat-square&label=Docker%20CI" alt="Docker CI"></a>
+  <a href="https://github.com/QuentinHsu/neko-master/actions/workflows/docker-release-main.yml"><img src="https://img.shields.io/github/actions/workflow/status/QuentinHsu/neko-master/docker-release-main.yml?style=flat-square&label=Docker%20Release" alt="Docker Release"></a>
   <a href="./docs/architecture.en.md"><img src="https://img.shields.io/badge/docs-architecture-0ea5e9?style=flat-square" alt="Architecture Docs"></a>
 </p>
 
@@ -204,10 +209,10 @@ Automatically detects port conflicts and configures everything:
 
 ```bash
 # Using curl
-curl -fsSL https://raw.githubusercontent.com/foru17/neko-master/main/setup.sh | bash
+curl -fsSL https://raw.githubusercontent.com/QuentinHsu/neko-master/main/setup.sh | bash
 
 # Or using wget
-wget -qO- https://raw.githubusercontent.com/foru17/neko-master/main/setup.sh | bash
+wget -qO- https://raw.githubusercontent.com/QuentinHsu/neko-master/main/setup.sh | bash
 ```
 
 The script will automatically:
@@ -221,7 +226,7 @@ The script will automatically:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/foru17/neko-master.git
+git clone https://github.com/QuentinHsu/neko-master.git
 cd neko-master
 
 # 2. Install dependencies
@@ -253,7 +258,7 @@ Supported gateway types: **Clash / Mihomo** (WebSocket real-time) and **Surge v5
 
 ```bash
 # Clash / Mihomo gateway example
-curl -fsSL https://raw.githubusercontent.com/foru17/neko-master/main/apps/agent/install.sh \
+curl -fsSL https://raw.githubusercontent.com/QuentinHsu/neko-master/main/apps/agent/install.sh \
   | env NEKO_SERVER='http://your-panel:3000' \
         NEKO_BACKEND_ID='1' \
         NEKO_BACKEND_TOKEN='ag_xxx' \
@@ -262,7 +267,7 @@ curl -fsSL https://raw.githubusercontent.com/foru17/neko-master/main/apps/agent/
         sh
 
 # Surge gateway example
-curl -fsSL https://raw.githubusercontent.com/foru17/neko-master/main/apps/agent/install.sh \
+curl -fsSL https://raw.githubusercontent.com/QuentinHsu/neko-master/main/apps/agent/install.sh \
   | env NEKO_SERVER='http://your-panel:3000' \
         NEKO_BACKEND_ID='2' \
         NEKO_BACKEND_TOKEN='ag_yyy' \
@@ -387,7 +392,7 @@ ports:
 ### Solution 3: Use One-Click Script
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/foru17/neko-master/main/setup.sh | bash
+curl -fsSL https://raw.githubusercontent.com/QuentinHsu/neko-master/main/setup.sh | bash
 ```
 
 The script will automatically detect and suggest available ports.
@@ -987,9 +992,9 @@ neko-master/
 
 Contributions are welcome!
 
-- 🐛 [Submit Bug](https://github.com/foru17/neko-master/issues/new)
-- 💡 [Request Feature](https://github.com/foru17/neko-master/issues/new)
-- 🔧 [Contribute Code](https://github.com/foru17/neko-master/pulls)
+- 🐛 [Submit Bug](https://github.com/QuentinHsu/neko-master/issues/new)
+- 💡 [Request Feature](https://github.com/QuentinHsu/neko-master/issues/new)
+- 🔧 [Contribute Code](https://github.com/QuentinHsu/neko-master/pulls)
 
 ## 📄 License
 
@@ -999,7 +1004,7 @@ Contributions are welcome!
 
 ## ⭐ Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=foru17/neko-master&type=date&legend=top-left)](https://www.star-history.com/#foru17/neko-master&type=date&legend=top-left)
+[![Star History Chart](https://api.star-history.com/svg?repos=QuentinHsu/neko-master&type=date&legend=top-left)](https://www.star-history.com/#QuentinHsu/neko-master&type=date&legend=top-left)
 
 ---
 

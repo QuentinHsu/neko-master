@@ -510,7 +510,7 @@ function buildAgentUrl(agentId: string): string {
 }
 
 const AGENT_INSTALL_SCRIPT_URL =
-  "https://raw.githubusercontent.com/foru17/neko-master/main/apps/agent/install.sh";
+  "https://raw.githubusercontent.com/QuentinHsu/neko-master/main/apps/agent/install.sh";
 
 function getSuggestedServerUrl(): string {
   if (typeof window !== "undefined" && window.location?.origin) {

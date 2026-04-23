@@ -44,7 +44,7 @@ CGO_ENABLED=0 GOOS=linux GOARCH=arm64 GOCACHE=/tmp/go-build go build -trimpath -
 ### One-line Install Script (`curl | sh`)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/foru17/neko-master/main/apps/agent/install.sh \
+curl -fsSL https://raw.githubusercontent.com/QuentinHsu/neko-master/main/apps/agent/install.sh \
   | env NEKO_SERVER="https://your-neko.example.com" \
         NEKO_BACKEND_ID="1" \
         NEKO_BACKEND_TOKEN="<backend-token>" \
@@ -68,7 +68,7 @@ nekoagent uninstall
 Pin release version (recommended for production):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/foru17/neko-master/main/apps/agent/install.sh \
+curl -fsSL https://raw.githubusercontent.com/QuentinHsu/neko-master/main/apps/agent/install.sh \
   | env NEKO_AGENT_VERSION="agent-v0.2.0" \
         NEKO_SERVER="https://your-neko.example.com" \
         NEKO_BACKEND_ID="1" \

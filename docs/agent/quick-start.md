@@ -18,7 +18,7 @@
 ### Clash / Mihomo 网关
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/foru17/neko-master/main/apps/agent/install.sh \
+curl -fsSL https://raw.githubusercontent.com/QuentinHsu/neko-master/main/apps/agent/install.sh \
   | env NEKO_SERVER='http://your-panel:3000' \
         NEKO_BACKEND_ID='1' \
         NEKO_BACKEND_TOKEN='ag_xxx' \
@@ -31,7 +31,7 @@ curl -fsSL https://raw.githubusercontent.com/foru17/neko-master/main/apps/agent/
 ### Surge 网关
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/foru17/neko-master/main/apps/agent/install.sh \
+curl -fsSL https://raw.githubusercontent.com/QuentinHsu/neko-master/main/apps/agent/install.sh \
   | env NEKO_SERVER='http://your-panel:3000' \
         NEKO_BACKEND_ID='2' \
         NEKO_BACKEND_TOKEN='ag_yyy' \
