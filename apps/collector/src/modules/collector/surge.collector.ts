@@ -238,6 +238,13 @@ function convertSurgeChains(
   return chains;
 }
 
+export function calculateSampleDurationMs(
+  now: number,
+  lastSeen: number,
+): number {
+  return Math.max(1, now - lastSeen);
+}
+
 export function createSurgeCollector(
   db: StatsDatabase,
   url: string,
@@ -583,6 +590,10 @@ export function createSurgeCollector(
           // Existing connection - calculate delta
           let uploadDelta = 0;
           let downloadDelta = 0;
+          const sampleDurationMs = calculateSampleDurationMs(
+            now,
+            existing.lastSeen,
+          );
 
           // Detect counter reset (connection restart/reuse)
           if (currentUpload < existing.lastUpload || currentDownload < existing.lastDownload) {
@@ -638,7 +649,7 @@ export function createSurgeCollector(
               download: downloadDelta,
               connections,
               sourceIP: existing.sourceIP,
-              sampleDurationMs: Math.max(1, now - existing.lastSeen),
+              sampleDurationMs,
               timestampMs: req.time || now,
             });
             realtimeStore.recordTraffic(
@@ -652,7 +663,7 @@ export function createSurgeCollector(
                 rulePayload: existing.rulePayload || "",
                 upload: uploadDelta,
                 download: downloadDelta,
-                sampleDurationMs: Math.max(1, now - existing.lastSeen),
+                sampleDurationMs,
               },
               connections,
               now

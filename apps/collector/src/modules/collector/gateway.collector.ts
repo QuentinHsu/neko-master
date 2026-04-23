@@ -134,6 +134,13 @@ interface TrackedConnection {
   lastSeen: number;
 }
 
+export function calculateSampleDurationMs(
+  now: number,
+  lastSeen: number,
+): number {
+  return Math.max(1, now - lastSeen);
+}
+
 export function createCollector(
   db: StatsDatabase,
   url: string,
@@ -385,11 +392,22 @@ export function createCollector(
           }
         } else {
           // Existing connection - calculate delta and add to batch
-          const uploadDelta = Math.max(0, conn.upload - existing.lastUpload);
-          const downloadDelta = Math.max(
-            0,
-            conn.download - existing.lastDownload,
+          const sampleDurationMs = calculateSampleDurationMs(
+            now,
+            existing.lastSeen,
           );
+          const uploadDelta =
+            conn.upload >= existing.lastUpload
+              ? conn.upload - existing.lastUpload
+              : 0;
+          const downloadDelta =
+            conn.download >= existing.lastDownload
+              ? conn.download - existing.lastDownload
+              : 0;
+
+          existing.lastUpload = conn.upload;
+          existing.lastDownload = conn.download;
+          existing.lastSeen = now;
 
           if (uploadDelta > 0 || downloadDelta > 0) {
             const connections = existing.counted ? 0 : 1;
@@ -412,7 +430,7 @@ export function createCollector(
               download: downloadDelta,
               connections,
               sourceIP: existing.sourceIP,
-              sampleDurationMs: Math.max(1, now - existing.lastSeen),
+              sampleDurationMs,
               timestampMs: now,
             });
             realtimeStore.recordTraffic(
@@ -426,7 +444,7 @@ export function createCollector(
                 rulePayload: existing.rulePayload || '',
                 upload: uploadDelta,
                 download: downloadDelta,
-                sampleDurationMs: Math.max(1, now - existing.lastSeen),
+                sampleDurationMs,
               },
               connections,
               now
@@ -444,10 +462,6 @@ export function createCollector(
               existingGeo.connections += connections;
               geoBatchByIp.set(existing.ip, existingGeo);
             }
-
-            existing.lastUpload = conn.upload;
-            existing.lastDownload = conn.download;
-            existing.lastSeen = now;
             hasNewTraffic = true;
           }
         }
