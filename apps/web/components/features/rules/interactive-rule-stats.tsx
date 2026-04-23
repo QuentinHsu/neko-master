@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect, useRef, startTransition } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { BarChart3, Link2, Waypoints } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
@@ -8,18 +8,17 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell as BarCell, LabelList } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatBytes, formatNumber } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import { api, type GatewayRulesResponse, type TimeRange } from "@/lib/api";
+import { type TimeRange } from "@/lib/api";
 import { useStableTimeRange } from "@/lib/hooks/use-stable-time-range";
 import { useStatsWebSocket } from "@/lib/websocket";
 import {
   getRuleDomainsQueryKey,
   getRuleIPsQueryKey,
 } from "@/lib/stats-query-keys";
-import { useRules, useGatewayRules, useRuleDomains, useRuleIPs } from "@/hooks/api/use-rules";
+import { useRules, useRuleDomains, useRuleIPs } from "@/hooks/api/use-rules";
 import {
   DomainStatsTable,
   IPStatsTable,
@@ -72,6 +71,10 @@ interface RuleDomainChartItem {
   upload: number;
   connections: number;
   color: string;
+}
+
+function normalizeRuleName(name: string): string {
+  return name.trim();
 }
 
 // Custom label renderer for bar chart
@@ -147,13 +150,6 @@ export function InteractiveRuleStats({
   // Ref for TOP DOMAINS card to detect container width
   const topDomainsCardRef = useRef<HTMLDivElement>(null);
   const topDomainsWidth = useContainerWidth(topDomainsCardRef);
-  const topDomainsItemCount = topDomainsWidth >= 500 ? 15 : 10;
-
-  // Fetch Gateway rules to find zero-traffic rules.
-  const { data: gatewayRules = null } = useGatewayRules({
-    activeBackendId,
-    enabled: !!activeBackendId,
-  });
 
   useEffect(() => {
     const media = window.matchMedia("(min-width: 640px)");
@@ -163,17 +159,10 @@ export function InteractiveRuleStats({
     return () => media.removeEventListener("change", update);
   }, []);
 
-  // Fetch Gateway rules to find zero-traffic rules.
-  // Ruleset metadata changes infrequently, so load on mount/backend switch only.
-
   const chartData = useMemo<RuleChartItem[]>(() => {
-    if (!rulesData) return [];
-    
-    // Normalize rule names for deduplication (trim whitespace)
-    const normalizeRuleName = (name: string) => name?.trim() || '';
-    
-    const existingRuleNames = new Set(rulesData.map(r => normalizeRuleName(r.rule)));
-    const trafficItems: RuleChartItem[] = rulesData.map((rule, index) => ({
+    if (!rulesData.length) return [];
+
+    return rulesData.map((rule, index) => ({
       name: normalizeRuleName(rule.rule),
       rawName: normalizeRuleName(rule.rule),
       value: rule.totalDownload + rule.totalUpload,
@@ -185,45 +174,7 @@ export function InteractiveRuleStats({
       rank: index,
       hasTraffic: true,
     }));
-
-    // Append zero-traffic rules from Gateway API, using the target proxy group name
-    // (rule.proxy) which matches how traffic data stores rule names.
-    // Multiple low-level rules (RuleSet, ProcessName, etc.) can target the same
-    // proxy group, so we deduplicate by proxy group name.
-    if (gatewayRules?.rules) {
-      const zeroTrafficItems: typeof trafficItems = [];
-      for (const rule of gatewayRules.rules) {
-        // Filter out internal/system rules that users typically don't configure manually or don't want to see
-        // - 'GeoIP': Built-in country rules
-        // - 'RuleSet': Surge's internal expansion of rulesets
-        // - Empty payload: Invalid/Internal
-        if (!rule.payload) continue;
-        if (['GeoIP', 'RuleSet'].includes(rule.type)) continue;
-
-        const proxyGroup = normalizeRuleName(rule.proxy);
-        // Skip empty proxy names
-        if (!proxyGroup) continue;
-        // Skip if already exists (case-sensitive for emoji names)
-        if (existingRuleNames.has(proxyGroup)) continue;
-        existingRuleNames.add(proxyGroup);
-        zeroTrafficItems.push({
-          name: proxyGroup,
-          rawName: proxyGroup,
-          value: 0,
-          download: 0,
-          upload: 0,
-          connections: 0,
-          finalProxy: proxyGroup,
-          color: "#9CA3AF",
-          rank: trafficItems.length + zeroTrafficItems.length,
-          hasTraffic: false,
-        });
-      }
-      return [...trafficItems, ...zeroTrafficItems];
-    }
-
-    return trafficItems;
-  }, [rulesData, gatewayRules]);
+  }, [rulesData]);
 
   const totalTraffic = useMemo(() => {
     return chartData.reduce((sum, item) => sum + item.value, 0);

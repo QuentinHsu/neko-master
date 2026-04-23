@@ -24,7 +24,6 @@ import {
   Server,
   Layers,
   Eye,
-  Activity,
   Maximize2,
   Minimize2,
 } from "lucide-react";
@@ -98,7 +97,6 @@ const MergedAnimatedFlowEdge = memo(function MergedAnimatedFlowEdge({
   const isToProxy = edgeData?.isToProxy;
   const isToDirect = edgeData?.isToDirect;
   const dimmed = edgeData?.dimmed;
-  const showAll = edgeData?.showAll;
   const zeroTraffic = edgeData?._zeroTraffic;
   const [edgePath] = getStraightPath({ sourceX, sourceY, targetX, targetY });
 
@@ -927,7 +925,6 @@ function UnifiedRuleChainFlowInner({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
-  const [activePolicyOnly, setActivePolicyOnly] = useState(false);
   const prevRuleRef = useRef(selectedRule);
   const hasLoadedRef = useRef(false);
   const requestIdRef = useRef(0);
@@ -1149,19 +1146,9 @@ function UnifiedRuleChainFlowInner({
   // Filter/Merge DAG
   const filteredData = useMemo((): AllChainFlowData | null => {
     if (!data) return null;
-    // If activeChainInfo is not loaded yet and we're not showing all policies,
-    // we need to wait for it to properly filter the data.
-    // Return empty data to show loading state instead of unfiltered data.
-    if (!activeChainInfo && !activePolicyOnly) {
-      return { nodes: [], links: [], rulePaths: {}, maxLayer: 0 };
-    }
     if (!activeChainInfo) return data;
 
     const { activeNodeNames, activeLinkKeys, activeChains } = activeChainInfo;
-
-    // Build name→index map of existing nodes
-    const existingNodeMap = new Map<string, number>();
-    data.nodes.forEach((n, i) => existingNodeMap.set(n.name, i));
 
     // Determine which existing nodes to keep
     const keepNodeIndices = new Set<number>();
@@ -1178,22 +1165,19 @@ function UnifiedRuleChainFlowInner({
     }
 
     data.nodes.forEach((node, idx) => {
-      // 1. If "All Policies" is checked, keep everything
-      if (activePolicyOnly) {
-        keepNodeIndices.add(idx);
+      if (showAll) {
+        if (nodeHasTraffic(node) || activeNodeNames.has(node.name)) {
+          keepNodeIndices.add(idx);
+        }
         return;
       }
-      
-      // 2. If a specific rule is selected, always keep nodes in its path
-      // Use normalized lookup
+
       if (selectedRule) {
-        // Try exact match first
         const exactMatch = normalizedRulePaths.get(selectedRule);
         if (exactMatch?.nodeIndices.includes(idx)) {
           keepNodeIndices.add(idx);
           return;
         }
-        // Try emoji-normalized match (e.g., "GitHub" matches "👨‍💻 GitHub")
         for (const [key, value] of normalizedRulePaths.entries()) {
           if (key.includes(selectedRule) || selectedRule.includes(key)) {
             if (value.nodeIndices.includes(idx)) {
@@ -1203,12 +1187,9 @@ function UnifiedRuleChainFlowInner({
           }
         }
       }
-      
-      // 3. Otherwise, only keep nodes with active traffic or relevant to active chains
-      if (activeChains.size > 0 && (nodeHasTraffic(node) || activeNodeNames.has(node.name))) {
-         if (nodeHasTraffic(node)) {
-             keepNodeIndices.add(idx);
-         }
+
+      if (!selectedRule && nodeHasTraffic(node)) {
+        keepNodeIndices.add(idx);
       }
     });
 
@@ -1228,21 +1209,18 @@ function UnifiedRuleChainFlowInner({
       });
     }
 
-    // Second: add zero-traffic nodes for active chain members not in existing data
-    // If "All Policies" is ON, we inject nodes for ALL chains.
-    // If a whitelist (visibleRuleNames) is provided, we only show those.
-    // Otherwise, we only inject for the currently selected rule.
+    // Second: add zero-traffic nodes for active chain members not in existing data.
+    // Focus mode only injects the selected rule's resolved group path.
+    // Panorama mode injects all visible active routes so the topology reads as a proxy-group map.
     const chainsToInject = new Set<string>();
-    if (activePolicyOnly) {
+    if (showAll) {
       if (visibleRuleNames && visibleRuleNames.size > 0) {
-        // Only inject chains that are in the user's rule list
         for (const ruleName of visibleRuleNames) {
-           if (activeChains.has(ruleName)) {
-             chainsToInject.add(ruleName);
-           }
+          if (activeChains.has(ruleName)) {
+            chainsToInject.add(ruleName);
+          }
         }
       } else {
-        // Fallback: inject everything
         for (const ruleName of activeChains.keys()) {
           chainsToInject.add(ruleName);
         }
@@ -1295,7 +1273,6 @@ function UnifiedRuleChainFlowInner({
       
       // Both endpoints must be in our kept nodes
       if (newSrc !== undefined && newTgt !== undefined) {
-        // Keep link if "All Policies" OR if it's a Rule->Group link OR generally if endpoints are kept
         const isRuleLink = srcNode.nodeType === 'rule';
 
         // Check if the server-side analysis knows this link for the selected rule
@@ -1319,7 +1296,7 @@ function UnifiedRuleChainFlowInner({
         }
         
         const shouldKeepLink = 
-             activePolicyOnly || 
+             showAll || 
              isRuleLink || 
              isServerKnownLink ||
              activeLinkKeys.has(encodeActiveLinkKey(srcNode.name, tgtNode.name));
@@ -1458,7 +1435,7 @@ function UnifiedRuleChainFlowInner({
       rulePaths: newRulePaths,
       maxLayer,
     };
-  }, [data, activePolicyOnly, activeChainInfo, selectedRule, visibleRuleNames]);
+  }, [data, activeChainInfo, selectedRule, showAll, visibleRuleNames]);
 
   const renderData = filteredData;
 
@@ -1509,24 +1486,16 @@ function UnifiedRuleChainFlowInner({
       <Card className="mb-4 overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2 min-w-0">
-            <Workflow className="h-4 w-4 text-primary shrink-0" />
-            <span className="leading-tight">{t("chainFlow")}</span>
-          </CardTitle>
+          <div className="min-w-0">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2 min-w-0">
+              <Workflow className="h-4 w-4 text-primary shrink-0" />
+              <span className="leading-tight">{t("chainFlow")}</span>
+            </CardTitle>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t("chainFlowDescription")}
+            </p>
+          </div>
           <div className="flex w-full sm:w-auto items-center justify-end gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className={cn(
-                "h-7 px-3 text-xs gap-1.5 rounded-full transition-colors",
-                activePolicyOnly
-                  ? "border-emerald-500 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 dark:border-emerald-500/50"
-                  : "hover:border-emerald-300 hover:text-emerald-600",
-              )}
-              onClick={() => setActivePolicyOnly(!activePolicyOnly)}>
-              <Activity className={cn("h-3.5 w-3.5", activePolicyOnly && "text-emerald-500")} />
-              {t("activePolicy")}
-            </Button>
             <Button
               variant={showAll ? "default" : "outline"}
               size="sm"
@@ -1548,21 +1517,6 @@ function UnifiedRuleChainFlowInner({
           className={cn("relative w-full", isFullscreen && "bg-background")}>
           {isFullscreen && (
             <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className={cn(
-                  "h-8 px-3 text-xs gap-1.5 rounded-full transition-colors bg-background/85 backdrop-blur",
-                  activePolicyOnly
-                    ? "border-emerald-500 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 dark:border-emerald-500/50"
-                    : "hover:border-emerald-300 hover:text-emerald-600",
-                )}
-                onClick={() => setActivePolicyOnly(!activePolicyOnly)}>
-                <Activity
-                  className={cn("h-3.5 w-3.5", activePolicyOnly && "text-emerald-500")}
-                />
-                {t("activePolicy")}
-              </Button>
               <Button
                 variant={showAll ? "default" : "outline"}
                 size="sm"
