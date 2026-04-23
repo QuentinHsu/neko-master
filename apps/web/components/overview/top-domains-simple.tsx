@@ -3,6 +3,7 @@
 import React, { useMemo } from "react";
 import { Globe, ArrowRight, BarChart3, Link2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { MetricSummaryRow } from "@/components/common/metric-summary-row";
 import { Button } from "@/components/ui/button";
 import { cn, formatBytes, formatNumber } from "@/lib/utils";
 import { useSettings, getFaviconUrl } from "@/lib/settings";
@@ -177,19 +178,12 @@ export const TopDomainsSimple = React.memo(function TopDomainsSimple({
                   />
                 </div>
                 {/* Stats */}
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                  <span className="text-blue-500 dark:text-blue-400">↓ {formatBytes(domain.totalDownload)}</span>
-                  <span className="text-purple-500 dark:text-purple-400">↑ {formatBytes(domain.totalUpload)}</span>
-                    <span className="flex items-center gap-1 tabular-nums">
-                      <Link2 className="w-3 h-3" />
-                      {formatNumber(domain.totalConnections)}
-                    </span>
-                  </div>
-                  <span className="tabular-nums">
-                    {sharePercent.toFixed(1)}%
-                  </span>
-                </div>
+                <MetricSummaryRow
+                  download={formatBytes(domain.totalDownload)}
+                  upload={formatBytes(domain.totalUpload)}
+                  connections={formatNumber(domain.totalConnections)}
+                  share={`${sharePercent.toFixed(1)}%`}
+                />
               </div>
             </div>
           );

@@ -3,6 +3,7 @@
 import { memo, useMemo } from "react";
 import { ArrowRight, BarChart3, Link2, Server } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { MetricSummaryRow } from "@/components/common/metric-summary-row";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn, formatBytes, formatNumber, formatRateBytes } from "@/lib/utils";
@@ -143,23 +144,12 @@ export const ProxyNodeList = memo(function ProxyNodeList({
                   }}
                 />
               </div>
-              <div className="grid w-full grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_auto] items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-                <span className="min-w-0 text-blue-500 dark:text-blue-400 whitespace-nowrap overflow-hidden text-ellipsis tabular-nums">
-                  ↓ {formatBytes(proxy.totalDownload)}
-                </span>
-                <span className="min-w-0 text-purple-500 dark:text-purple-400 whitespace-nowrap overflow-hidden text-ellipsis tabular-nums">
-                  ↑ {formatBytes(proxy.totalUpload)}
-                </span>
-                <span className="min-w-0 flex items-center gap-1 whitespace-nowrap overflow-hidden text-ellipsis tabular-nums">
-                  <Link2 className="w-3 h-3 shrink-0" />
-                  <span className="min-w-0 overflow-hidden text-ellipsis">
-                    {formatNumber(proxy.totalConnections)}
-                  </span>
-                </span>
-                <span className="tabular-nums text-right whitespace-nowrap">
-                  {percentage.toFixed(1)}%
-                </span>
-              </div>
+              <MetricSummaryRow
+                download={formatBytes(proxy.totalDownload)}
+                upload={formatBytes(proxy.totalUpload)}
+                connections={formatNumber(proxy.totalConnections)}
+                share={`${percentage.toFixed(1)}%`}
+              />
               {showPeakRates && (
                 <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px] text-muted-foreground/90">
                   <span className="flex min-w-0 items-center justify-between gap-2 whitespace-nowrap">

@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell as BarCell, LabelList } from "recharts";
+import { MetricSummaryRow } from "@/components/common/metric-summary-row";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -482,17 +483,12 @@ export function InteractiveRuleStats({
                           />
                         </div>
                         {/* Stats */}
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                            <span className="text-blue-500 dark:text-blue-400 whitespace-nowrap">↓ {formatBytes(item.download)}</span>
-                            <span className="text-purple-500 dark:text-blue-400 whitespace-nowrap">↑ {formatBytes(item.upload)}</span>
-                            <span className="flex items-center gap-1 tabular-nums">
-                              <Link2 className="w-3 h-3" />
-                              {formatNumber(item.connections)}
-                            </span>
-                          </div>
-                          <span className="tabular-nums">{percentage.toFixed(1)}%</span>
-                        </div>
+                        <MetricSummaryRow
+                          download={formatBytes(item.download)}
+                          upload={formatBytes(item.upload)}
+                          connections={formatNumber(item.connections)}
+                          share={`${percentage.toFixed(1)}%`}
+                        />
                       </div>
                       )}
                     </div>

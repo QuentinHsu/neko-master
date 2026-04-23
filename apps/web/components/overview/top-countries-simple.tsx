@@ -3,6 +3,7 @@
 import React, { useMemo } from "react";
 import { Globe, ArrowRight, BarChart3, Link2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { MetricSummaryRow } from "@/components/common/metric-summary-row";
 import { Button } from "@/components/ui/button";
 import { CountryFlag } from "@/components/features/countries";
 import { formatBytes, formatNumber, cn } from "@/lib/utils";
@@ -145,17 +146,12 @@ export const TopCountriesSimple = React.memo(function TopCountriesSimple({
                   />
                 </div>
                 {/* Stats */}
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <span className="text-blue-500 dark:text-blue-400">↓ {formatBytes(country.totalDownload)}</span>
-                    <span className="text-purple-500 dark:text-purple-400">↑ {formatBytes(country.totalUpload)}</span>
-                    <span className="flex items-center gap-1 tabular-nums">
-                      <Link2 className="w-3 h-3" />
-                      {formatNumber(country.totalConnections)}
-                    </span>
-                  </div>
-                  <span className="tabular-nums">{sharePercent.toFixed(1)}%</span>
-                </div>
+                <MetricSummaryRow
+                  download={formatBytes(country.totalDownload)}
+                  upload={formatBytes(country.totalUpload)}
+                  connections={formatNumber(country.totalConnections)}
+                  share={`${sharePercent.toFixed(1)}%`}
+                />
               </div>
             </div>
           );

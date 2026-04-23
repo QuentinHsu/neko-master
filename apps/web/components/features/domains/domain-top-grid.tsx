@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Globe, Link2, ArrowUpDown, ArrowRight } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { MetricSummaryRow } from "@/components/common/metric-summary-row";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatBytes, formatNumber } from "@/lib/utils";
@@ -113,16 +114,12 @@ export function DomainTopGrid({ data, limit = 5, onViewAll }: DomainTopGridProps
               </div>
 
               {/* Row 2: Stats */}
-              <div className="flex items-center justify-between text-xs text-muted-foreground pl-7">
-                <div className="flex items-center gap-3">
-                  <span className="text-blue-500">↓ {formatBytes(domain.totalDownload)}</span>
-                  <span className="text-purple-500">↑ {formatBytes(domain.totalUpload)}</span>
-                </div>
-                <span className="flex items-center gap-1">
-                  <Link2 className="w-3 h-3" />
-                  {formatNumber(domain.totalConnections)}
-                </span>
-              </div>
+              <MetricSummaryRow
+                className="pl-7"
+                download={formatBytes(domain.totalDownload)}
+                upload={formatBytes(domain.totalUpload)}
+                connections={formatNumber(domain.totalConnections)}
+              />
             </div>
           ))}
         </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Link2 } from "lucide-react";
+import { MetricSummaryRow } from "@/components/common/metric-summary-row";
 import { CountryFlag } from "./country-flag";
 import { formatBytes, formatNumber } from "@/lib/utils";
 import { useCountryName } from "@/lib/i18n-country";
@@ -101,23 +101,12 @@ export function CountryTrafficList({
               </div>
 
               {/* Metrics + Share */}
-              <div className="flex items-end justify-between text-xs">
-                <div className="flex items-center gap-2 sm:flex-col sm:items-start sm:gap-1 min-w-0">
-                  <span className="text-blue-500 tabular-nums whitespace-nowrap">
-                    ↓ {formatBytes(country.totalDownload)}
-                  </span>
-                  <span className="text-purple-500 tabular-nums whitespace-nowrap">
-                    ↑ {formatBytes(country.totalUpload)}
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-muted-foreground tabular-nums whitespace-nowrap">
-                    <Link2 className="w-3 h-3" />
-                    <span>{formatNumber(country.totalConnections)}</span>
-                  </span>
-                </div>
-                <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap shrink-0 sm:hidden">
-                  {percentage.toFixed(1)}%
-                </span>
-              </div>
+              <MetricSummaryRow
+                download={formatBytes(country.totalDownload)}
+                upload={formatBytes(country.totalUpload)}
+                connections={formatNumber(country.totalConnections)}
+                share={`${percentage.toFixed(1)}%`}
+              />
             </div>
           </div>
         );

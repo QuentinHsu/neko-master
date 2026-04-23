@@ -17,6 +17,7 @@ import {
   Cell as BarCell,
   LabelList,
 } from "recharts";
+import { MetricSummaryRow } from "@/components/common/metric-summary-row";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -408,23 +409,12 @@ export function InteractiveDeviceStats({
                             }}
                           />
                         </div>
-                        <div className="flex flex-wrap items-center justify-between gap-1 text-xs text-muted-foreground">
-                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                            <span className="text-blue-500 dark:text-blue-400 whitespace-nowrap">
-                              ↓ {formatBytes(item.download)}
-                            </span>
-                            <span className="text-purple-500 dark:text-purple-400 whitespace-nowrap">
-                              ↑ {formatBytes(item.upload)}
-                            </span>
-                            <span className="flex items-center gap-1 tabular-nums">
-                              <Link2 className="w-3 h-3" />
-                              {formatNumber(item.connections)}
-                            </span>
-                          </div>
-                          <span className="tabular-nums">
-                            {percentage.toFixed(1)}%
-                          </span>
-                        </div>
+                        <MetricSummaryRow
+                          download={formatBytes(item.download)}
+                          upload={formatBytes(item.upload)}
+                          connections={formatNumber(item.connections)}
+                          share={`${percentage.toFixed(1)}%`}
+                        />
                       </div>
                     </button>
                   );
