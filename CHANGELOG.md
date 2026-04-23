@@ -5,6 +5,41 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/spec/v2.0.0.html)。
 
+## [1.4.0] - 2026-04-23
+
+### 新增
+
+- record node peak throughput per second (c8daa42)
+- show peak rates in proxy stats (68b6a51)
+- add explicit subroutes for dashboard pages (bf0b45c)
+- add manual Docker release workflows for main and dev (d81c64b)
+
+### 修复
+
+- correct node peak rate aggregation (9df85c2)
+- clarify rules vs proxy groups on rules page (3ee9e05)
+- switch base image to debian for arm64 builds (0657d14)
+- conditionally update Docker Hub description based on variable (dcd13bd)
+- correct startup trap and zh docs links (c87664e)
+- correct peak sample duration calculation (70fa7e4)
+- adjust precision for peak rate units (81244e7)
+- unify precision for traffic unit displays (a210920)
+- stabilize peak metric alignment (2fabf1a)
+- stabilize proxy stats metric column layout (b889dcb)
+- unify metric row alignment across ranking cards (cd61e4d)
+- complete global i18n coverage and locale formatting (d7835f4)
+- handle empty changelog section in extractSection function (b0dfba2)
+- fix overlapping and overflow in country detail cards (d156aa7)
+- align stats card title positions (539bd9b)
+
+### 变更
+
+- migrate web build pipeline to rsbuild (9656711)
+- centralize local dev data paths (427319c)
+- align docker and agent repo paths with fork (98bfe3b)
+- unify proxy node lists across overview and proxies pages (dc4dfae)
+- unify hot ranking list interactions and layout (b5709a3)
+
 ## [1.3.7] - 2026-04-12
 
 ### 修复
